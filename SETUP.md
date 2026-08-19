@@ -3,6 +3,29 @@
 Everything here needs org-owner or repo-admin rights, so it cannot be done by
 an agent session. Work top to bottom; each step says how to confirm it worked.
 
+## Where this stands
+
+Verified on a real GitHub runner, 2026-08-19, at `cae7d18`:
+
+| | |
+|---|---|
+| Tree migrated | 80 files, every blob hash and file mode matching the staging tree |
+| CI, all six jobs | `bootstrap`, `lint`, `unit-tests`, `smoke-test`, `web-export`, `web-smoke` — green in ~2 min |
+| `deploy-main` | created `gh-pages` and redeployed on the next push |
+| Build stamp | `build-info.json` matches the deployed commit |
+| Published size | 38.07 MB total, 37.68 MB of it `index.wasm` |
+
+Still outstanding, all of it in this document: steps 2, 3, 4, 5 and 7. Until
+step 4 runs, `main` has **no protection at all** — force-pushable, deletable,
+and directly pushable by anyone with Write. Nobody but Talon has access yet, so
+nothing is exposed today, but **apply step 4 before inviting anyone**, not
+after.
+
+The self-test in the handoff has not been run. It cannot be, yet: it needs the
+bot reviewer (step 3), the preview URL (step 5), and protection (step 4) all
+live before any of its lines mean anything.
+
+
 > **Where this tree came from.** It was built in a Claude Code session bound to
 > `talonbaker/AoC`, which could not reach the `Great-Grand-Software` org at all:
 >
