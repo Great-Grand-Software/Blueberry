@@ -4,32 +4,23 @@ Everything here needs org-owner or repo-admin rights, so it cannot be done by
 an agent session. Work top to bottom; each step says how to confirm it worked.
 
 > **Where this tree came from.** It was built in a Claude Code session bound to
-> `talonbaker/AoC`, which could not create the repo in `Great-Grand-Software`:
+> `talonbaker/AoC`, which could not reach the `Great-Grand-Software` org at all:
 >
-> - `create_repository` → **403 "Resource not accessible by integration"** —
->   the org is visible, but the Claude GitHub App is not installed on it, or is
->   installed without permission to create repositories.
+> - `create_repository` → **403 "Resource not accessible by integration"**.
 > - `add_repo` → **"cross-tier adds are not supported in v1"** — a session can
->   only attach repos owned by the same owner it started with. This one started
->   on `talonbaker/*`, so no org repo can be attached to it at all, regardless
->   of App permissions.
+>   only attach repos owned by the owner it started with.
 >
-> The tree is staged under `blueberry/` in that repo and is meant to be
-> lifted out wholesale: the directory contents become the root of the new repo.
-> Nothing in it depends on its staging location.
->
-> Once the repo exists, **start a fresh Claude Code session with
-> `Great-Grand-Software/blueberry` as its initial source.** That session
-> can reach the repo normally and can finish Phases 5 and 6.
+> So the tree was staged under `blueberry/` in that repo, built never to depend
+> on that location, and lifted out wholesale later. The lift has since been
+> done, from a session holding both repos: the directory's contents became this
+> repo's root, with every blob hash and file mode verified against the source.
 
-## 1. Create the repository
+## 1. Create the repository — done
 
-Create `blueberry` inside the `Great-Grand-Software` org.
+`Great-Grand-Software/Blueberry` exists and holds this tree.
 
-Make it **public**. GitHub Pages on a private repo requires a paid plan, and
-the per-PR preview builds depend on Pages.
-
-Push this project tree to `main`.
+It must be **public**: GitHub Pages on a private repo requires a paid plan, and
+the per-PR preview builds depend on Pages. Confirm that before step 5.
 
 ## 2. Install the Claude GitHub App
 
@@ -55,6 +46,17 @@ possible.
 
 ## 4. Apply branch protection and merge policy
 
+> **This script cannot be run from a Claude Code agent session.** Those
+> sessions reach GitHub through a proxy that refuses direct
+> `api.github.com/repos/*` requests — which is every call this script makes.
+> Run it from a machine with ordinary network access, using a PAT with admin
+> rights on the repo. The `plan` subcommand makes no API calls and needs no
+> token, so an agent can still show you exactly what `apply` would write.
+>
+> Be aware that `verify` prints `FAIL` for every setting when it cannot *read*
+> the repo, which is indistinguishable from the settings being wrong. Confirm
+> you are getting real API responses before acting on a failing `verify`.
+
 ```bash
 export GH_TOKEN=<a token with repo admin rights>
 ./scripts/apply-repo-settings.sh plan     # review what it will do
@@ -62,7 +64,7 @@ export GH_TOKEN=<a token with repo admin rights>
 ./scripts/apply-repo-settings.sh verify
 ```
 
-This sets: PRs required on `main`; the four CI checks required; 1 approving
+This sets: PRs required on `main`; the five CI checks required; 1 approving
 review; CODEOWNERS binding; squash-only merges; auto-merge on; auto-delete
 branch on merge; no force pushes.
 
@@ -103,7 +105,7 @@ first successful PR preview deployment. So:
 ## 6. Know what merges by itself
 
 `.github/workflows/auto-merge.yml` switches GitHub's native auto-merge on for
-every non-draft PR. A PR therefore merges itself, squashed, as soon as the four
+every non-draft PR. A PR therefore merges itself, squashed, as soon as the five
 required checks pass and its required approving review lands — nothing bypasses
 branch protection, GitHub does the merging only when every rule is satisfied.
 
@@ -137,7 +139,7 @@ preference:
 1. Keep the review requirement and have Talon approve ordinary PRs too
    (safest, adds a human gate).
 2. Drop `required_approving_review_count` to `0` while keeping
-   `require_code_owner_reviews: true`, so the four CI checks plus CODEOWNERS
+   `require_code_owner_reviews: true`, so the five CI checks plus CODEOWNERS
    remain the real gates and the bot review stays advisory.
 3. Give the reviewing identity a PAT belonging to a machine user with write
    access, so its approvals count.
