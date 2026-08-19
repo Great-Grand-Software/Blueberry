@@ -278,9 +278,11 @@ the same PR.** An open slot quietly filled is worse than one still open.
 ├── SETUP.md                     ← one-time repo setup needing admin rights
 ├── project.godot                ← 720x960 portrait, aspect=keep, threads off
 ├── export_presets.cfg           ← Web preset; thread_support MUST stay false
+├── .claude/                     ← SessionStart hook: git identity + bootstrap
 ├── scripts/
 │   ├── bootstrap.sh             ← Phase 0, run first (owned by Talon)
 │   ├── apply-repo-settings.sh   ← branch protection (owned by Talon)
+│   ├── check-constraints.sh     ← the `constraints` CI gate; run it locally
 │   ├── autoload/game_state.gd   ← score, calendar position (only autoload)
 │   ├── game/                    ← calendar_data, day_counter, month_page,
 │   │                              month_image, calendar_screen
