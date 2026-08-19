@@ -47,33 +47,37 @@ Three vertical tiers, top to bottom.
 │        JANUARY          BEST 0  │
 ├──────┬───────────────────┬──────┤  y=100
 │      │                   │      │
-│      │   Tier 2 — image  │      │  420 x 420 square
+│      │   Tier 2 — image  │      │  440 x 420
 │      │   (line drawing)  │      │
 │      ├───────────────────┤      │  y=520
 │      │                   │      │
-│      │   Tier 3 — grid   │      │  420 x 420 square
+│      │   Tier 3 — grid   │      │  440 x 440 square
 │      │   (interactive)   │      │
-└──────┴───────────────────┴──────┘  y=940
+└──────┴───────────────────┴──────┘  y=960
 ```
 
 **Tier 1 — UI band.** Score/counter display, plus a small pause button pinned
 to the upper-left corner leading to the pause menu. It has **no fixed height**;
 it simply takes whatever vertical space the other two tiers leave over.
 
-**Tier 2 — image panel.** A square holding a monochrome line drawing tied to
-the current month.
+**Tier 2 — image panel.** A panel holding a monochrome line drawing tied to
+the current month, the same width as the grid below it.
 
 **Tier 3 — calendar grid.** A square directly beneath the image panel, forming
-a 1×2 stacked block with it. This is the only interactive area.
+a 1×2 stacked block with it. This is the only interactive area, so its size
+sets the tap target and legibility of every day cell — it gets first claim on
+any spare room in the block.
 
-> **A geometric consequence worth knowing.** Two stacked squares plus a 3:4
-> frame forces the block to be narrower than the screen: two full-width squares
-> would need `2W` of height where only `1.33W` exists. At `720x960` with a
-> 420-wide block, the tiers come to 100 / 420 / 420 with a 20px bottom margin,
-> leaving 150px of ground either side. The generous side margins are a
-> *result* of the brief, not a style choice layered on top of it. If the block
-> should instead be wider, something else has to give — the squares, or the
-> 3:4 frame.
+> **A geometric consequence worth knowing.** A block this tall plus a 3:4
+> frame forces it to be narrower than the screen: a full-width 720 square
+> would need far more height than the `1.33W` available. At `720x960` with a
+> 440-wide block, the tiers come to 100 / 420 / 440 with no bottom margin left
+> to give, leaving 140px of ground either side. The bottom margin and side
+> margins are budget the two tiers draw against, not a style choice layered on
+> top of them — Tier 3 spent all of the bottom margin to make its day cells
+> bigger, and both tiers spent 10px of each side margin to grow with it. If
+> the block should grow further, something else has to give — the UI band,
+> the image tier's own height, or the 3:4 frame.
 
 ---
 
