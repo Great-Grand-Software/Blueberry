@@ -245,17 +245,24 @@ Use `.github/pull_request_template.md`. Every PR states what changed, why, and
 how it was tested — concretely. For gameplay changes, open the PR preview build
 in a browser and say what you actually did in it.
 
-Required CI checks, all five must pass: `lint`, `unit-tests`, `smoke-test`,
-`web-export`, `web-smoke`. CI also deploys a playable preview to a per-PR URL,
+Required CI checks, all six must pass: `constraints`, `lint`, `unit-tests`,
+`smoke-test`, `web-export`, `web-smoke`. None of them needs a credential — this
+repository has no secrets. CI also deploys a playable preview to a per-PR URL,
 stamped with its commit so a tester can tell builds apart.
 
-**Nothing merges on a bot approval alone.** Auto-merge only switches on when a
+`constraints` is the deterministic half of review: it asserts the §2 hard
+constraints and the §4 limits that can be checked without judgement. Run it
+yourself with `scripts/check-constraints.sh`. Everything needing judgement is
+the reviewer's job.
+
+**Every PR needs a review from another person.** You cannot approve your own,
+and an agent cannot approve one at all. Auto-merge then switches on only when a
 human adds the `tested` label, meaning they played the preview. See
 `CONTRIBUTING.md` for the full loop.
 
-Files in `.github/CODEOWNERS` — this file, the CI workflows, the bootstrap
-script, and the repo-settings script — additionally require Talon's personal
-approval.
+Files in `.github/CODEOWNERS` — this file, the CI workflows, the bootstrap and
+repo-settings scripts, the constraint checker, `.gdlintrc`, `project.godot`,
+and `.claude/` — additionally require Talon's personal approval.
 
 **If your PR fills one of the open slots in `DESIGN.md` §7, update that file in
 the same PR.** An open slot quietly filled is worse than one still open.

@@ -22,6 +22,24 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------
+  # 0. Hard constraints
+  #
+  # Deliberately needs no toolchain and no credentials, so it is the fastest
+  # signal on a PR and cannot break because a secret expired. Replaces the
+  # mechanical half of what an LLM reviewer used to check; the judgement half
+  # belongs to the human reviewer.
+  # ---------------------------------------------------------------------
+  constraints:
+    name: constraints
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check CLAUDE.md hard constraints
+        run: ./scripts/check-constraints.sh
+
+  # ---------------------------------------------------------------------
   # Shared environment, built once from the single source of truth.
   # ---------------------------------------------------------------------
   bootstrap:

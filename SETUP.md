@@ -5,26 +5,21 @@ an agent session. Work top to bottom; each step says how to confirm it worked.
 
 ## Where this stands
 
-Verified on a real GitHub runner, 2026-08-19, at `cae7d18`:
+Verified on a real GitHub runner, 2026-08-19:
 
 | | |
 |---|---|
 | Tree migrated | 80 files, every blob hash and file mode matching the staging tree |
-| CI, all six jobs | `bootstrap`, `lint`, `unit-tests`, `smoke-test`, `web-export`, `web-smoke` — green in ~2 min |
+| CI, all jobs | `constraints`, `lint`, `unit-tests`, `smoke-test`, `web-export`, `web-smoke` — green in ~2 min |
 | `deploy-main` | created `gh-pages` and redeployed on the next push |
 | Build stamp | `build-info.json` matches the deployed commit |
 | Published size | 38.07 MB total, 37.68 MB of it `index.wasm` |
+| Secrets required | **none** — every job runs on GitHub's per-run token |
 
-Still outstanding, all of it in this document: steps 2, 3, 4, 5 and 7. Until
-step 4 runs, `main` has **no protection at all** — force-pushable, deletable,
-and directly pushable by anyone with Write. Nobody but Talon has access yet, so
-nothing is exposed today, but **apply step 4 before inviting anyone**, not
-after.
-
-The self-test in the handoff has not been run. It cannot be, yet: it needs the
-bot reviewer (step 3), the preview URL (step 5), and protection (step 4) all
-live before any of its lines mean anything.
-
+Still outstanding: steps 2, 3, 4 and 6 below. Until step 3 runs, `main` has
+**no protection at all** — force-pushable, deletable, and directly pushable by
+anyone with Write. Nobody but Talon has access yet, so nothing is exposed
+today, but **apply step 3 before inviting anyone**, not after.
 
 > **Where this tree came from.** It was built in a Claude Code session bound to
 > `talonbaker/AoC`, which could not reach the `Great-Grand-Software` org at all:
@@ -43,31 +38,22 @@ live before any of its lines mean anything.
 `Great-Grand-Software/Blueberry` exists and holds this tree.
 
 It must be **public**: GitHub Pages on a private repo requires a paid plan, and
-the per-PR preview builds depend on Pages. Confirm that before step 5.
+the per-PR preview builds depend on Pages. It currently is.
 
 ## 2. Install the Claude GitHub App
 
 From a Claude Code terminal session, run `/install-github-app`, or install it
-manually from https://github.com/apps/claude.
+manually from https://github.com/apps/claude. Grant it access to
+`Great-Grand-Software/Blueberry`. You must be a repo admin.
 
-Grant it access to `Great-Grand-Software/blueberry`.
-You must be a repo admin.
+This is **not** needed by CI — no workflow calls Anthropic. It is what lets
+each developer's Claude Code cloud session reach this repo. Confirm it when you
+add the second developer: if their session can clone but every push is refused
+by the git proxy, this is why.
 
 **Confirm:** the app appears under Settings → GitHub Apps for the repo.
 
-## 3. Add the `ANTHROPIC_API_KEY` secret
-
-Settings → Secrets and variables → Actions → New repository secret.
-
-- Name: `ANTHROPIC_API_KEY`
-- Value: a key from an **Anthropic Console account with API billing**, kept
-  separate from any Claude subscription used for interactive coding sessions.
-
-**Confirm:** open any PR. The `claude-review` job fails immediately with a
-clear error if the secret is missing, so a silent misconfiguration is not
-possible.
-
-## 4. Apply branch protection and merge policy
+## 3. Apply branch protection and merge policy
 
 > **This script cannot be run from a Claude Code agent session.** Those
 > sessions reach GitHub through a proxy that refuses direct
@@ -87,13 +73,17 @@ export GH_TOKEN=<a token with repo admin rights>
 ./scripts/apply-repo-settings.sh verify
 ```
 
-This sets: PRs required on `main`; the five CI checks required; 1 approving
-review; CODEOWNERS binding; squash-only merges; auto-merge on; auto-delete
-branch on merge; no force pushes.
+This sets: PRs required on `main`; the six CI checks required; 1 approving
+review; CODEOWNERS binding; admins bound too; squash-only merges; auto-merge
+on; auto-delete branch on merge; no force pushes; no deletions.
+
+**Order matters.** Required status checks must have been seen by GitHub at
+least once before they can be required by name, or the call fails on unknown
+contexts. CI has now run on `main`, so all six are known.
 
 **Confirm:** `verify` exits 0 and prints all `PASS`.
 
-## 4a. Godot-on-Pages is proven, not assumed
+## 3a. Godot-on-Pages is proven, not assumed
 
 The single-threaded Web export has been published to GitHub Pages and verified
 end to end, so this pipeline is known to work before anyone depends on it:
@@ -109,62 +99,68 @@ end to end, so this pipeline is known to work before anyone depends on it:
 - The same check was re-run against the bytes cloned back *from GitHub*, not
   just the local build, so what is published is what was tested.
 
-Build size is ~39 MB, nearly all `index.wasm` — well inside GitHub's 100 MB
+Build size is ~38 MB, nearly all `index.wasm` — well inside GitHub's 100 MB
 file limit and the 1 GB Pages limit, but a slow first load on mobile data.
 Pages serves it compressed.
 
-## 5. Enable GitHub Pages
+## 4. Enable GitHub Pages
 
-Pages needs the `gh-pages` branch to exist, and that branch is created by the
-first successful PR preview deployment. So:
+`gh-pages` already exists — `deploy-main` created it and has published `main`
+to it. So this is now a single step:
 
-1. Open the first PR and let CI finish.
-2. Re-run `./scripts/apply-repo-settings.sh apply` to point Pages at
-   `gh-pages`, or set it by hand under Settings → Pages → Source: *Deploy from
-   a branch* → `gh-pages` / `/ (root)`.
+Settings → Pages → Source: *Deploy from a branch* → `gh-pages` / `/ (root)`.
 
-**Confirm:** the preview URL posted on the PR actually loads and plays.
+The site will be at `https://great-grand-software.github.io/Blueberry/`, and
+per-PR previews at `…/Blueberry/pr-<N>/`. Note the capital B: the preview
+workflow lowercases the owner, which a hostname requires, but uses the repo
+name as GitHub spells it.
 
-## 6. Know what merges by itself
+**Confirm:** that URL loads and the game plays.
 
-`.github/workflows/auto-merge.yml` switches GitHub's native auto-merge on for
-every non-draft PR. A PR therefore merges itself, squashed, as soon as the five
-required checks pass and its required approving review lands — nothing bypasses
-branch protection, GitHub does the merging only when every rule is satisfied.
+## 5. Know what merges by itself
 
-To hold a PR back: open it as a draft, or click auto-merge off on the PR.
+`.github/workflows/auto-merge.yml` switches GitHub's native auto-merge on for a
+PR **only once someone adds the `tested` label**. The PR then merges itself,
+squashed, as soon as the six required checks pass and its approving review
+lands. Nothing bypasses branch protection — GitHub does the merging only when
+every rule is satisfied.
+
+Worth knowing: anyone with Write can apply that label, including their agent.
+It is a discipline, not an enforced control. The enforced control is the
+required review, which a person has to give.
+
+To hold a PR back: open it as a draft, or click auto-merge off.
 To turn the behavior off entirely, delete that workflow.
 
-## 7. Org permissions
+## 6. Org permissions, and adding a developer
+
+The model is ordinary GitHub: everyone authenticates as themselves, nobody
+shares a credential, and peer review is the gate.
 
 - Talon: sole **Org Owner**.
-- Everyone else: **Org Member** with repo-level **Write** access — full
-  read/write on code, no Admin or Owner rights.
+- Everyone else: **Org Member**, with repo access granted through a **team** —
+  never as an individual collaborator, and never **Admin**. An Admin can edit
+  branch protection and delete the gate, which makes the whole arrangement
+  theatre.
 
-Set under the org's People page and the repo's Settings → Collaborators and
-teams.
+**One-time, create the team:**
 
----
+1. Org → Teams → New team, name it `developers`.
+2. Repo → Settings → Collaborators and teams → Add team → `developers` →
+   **Write**.
 
-## Known risk to verify on the first real PR
+**For each new developer:**
 
-**Does the Claude bot's approval actually satisfy the "1 required approving
-review" rule?**
+1. Org → People → Invite member. Role: **Member**.
+2. Add them to the `developers` team. That is what grants repo access — do not
+   add them to the repo directly, or you end up managing permissions in two
+   places.
+3. Point them at `CONTRIBUTING.md`. The only setup they need is
+   `scripts/bootstrap.sh`, and the SessionStart hook runs it for them.
+4. Have them open a small PR and get it reviewed by someone else. That proves
+   the loop works for them end to end before they rely on it.
 
-GitHub does not count approvals from every bot identity toward required
-reviews. Whether an app-authored approval counts depends on the app's
-permissions on the repo. This has **not** been verified end-to-end.
-
-Watch the first PR: if it collects the bot's approval but the merge button
-still says "waiting on required review", the fallback options are, in order of
-preference:
-
-1. Keep the review requirement and have Talon approve ordinary PRs too
-   (safest, adds a human gate).
-2. Drop `required_approving_review_count` to `0` while keeping
-   `require_code_owner_reviews: true`, so the five CI checks plus CODEOWNERS
-   remain the real gates and the bot review stays advisory.
-3. Give the reviewing identity a PAT belonging to a machine user with write
-   access, so its approvals count.
-
-Option 2 is a one-line change in `scripts/apply-repo-settings.sh`.
+**Confirm** on their first PR: their commits show their avatar and link to
+their account (the SessionStart hook sets git identity from whoever the session
+is authenticated as), CI runs, the preview deploys, and the PR cannot merge
+until another person approves it.

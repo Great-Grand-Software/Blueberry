@@ -5,11 +5,10 @@ name: Auto Merge
 #
 # WHY THIS IS GATED
 #
-# The bot reviewer can satisfy the "1 required approving review" rule on its
-# own. If auto-merge were enabled the moment a PR opened, a PR could go green
-# and merge itself before any person ever opened the preview build. That would
-# skip the human testing step entirely, which is the whole point of building
-# previews.
+# A PR is reviewed by another developer. If auto-merge were enabled the moment
+# a PR opened, it could go green and merge itself the instant that approval
+# landed — before anyone had opened the preview build. That would skip the
+# human testing step entirely, which is the whole point of building previews.
 #
 # So the gate is an explicit human action: add the `tested` label. Nothing
 # else turns auto-merge on. Adding the label says "I played this build and I

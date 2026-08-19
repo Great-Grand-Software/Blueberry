@@ -23,9 +23,9 @@ readonly BRANCH="${BLUEBERRY_BRANCH:-main}"
 readonly PAGES_BRANCH="gh-pages"
 readonly API="https://api.github.com"
 
-# The four required status checks. These strings must exactly match the `name:`
+# The required status checks. These strings must exactly match the `name:`
 # of each job in .github/workflows/ci.yml.
-readonly REQUIRED_CHECKS=("lint" "unit-tests" "smoke-test" "web-export" "web-smoke")
+readonly REQUIRED_CHECKS=("constraints" "lint" "unit-tests" "smoke-test" "web-export" "web-smoke")
 
 if [[ -t 1 ]]; then
 	C_RED=$'\033[31m'; C_GRN=$'\033[32m'; C_YEL=$'\033[33m'; C_BLD=$'\033[1m'; C_OFF=$'\033[0m'
@@ -73,7 +73,7 @@ protection_payload() {
 import json, sys
 contexts = json.loads(sys.argv[1])
 print(json.dumps({
-    # All four CI checks must pass, against an up-to-date branch.
+    # All six CI checks must pass, against an up-to-date branch.
     "required_status_checks": {"strict": True, "contexts": contexts},
     # Admin bypass, deliberately off: admins are bound by everything below,
     # exactly like everyone else. Talon chose this over keeping an escape
@@ -216,7 +216,7 @@ if not prot or "required_status_checks" not in prot:
 else:
     got_checks = set(prot.get("required_status_checks", {}).get("contexts", []))
     result(want_checks <= got_checks,
-           "all five CI checks required",
+           "all six CI checks required",
            f"missing: {sorted(want_checks - got_checks)}" if want_checks - got_checks else "")
     extra = got_checks - want_checks
     if extra:
