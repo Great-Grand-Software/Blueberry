@@ -21,3 +21,24 @@
 
 # Phase 0 bootstrap: the single source of truth for the environment.
 /scripts/bootstrap.sh             @talonbaker
+
+# Config the required checks read, and hard constraints nothing else asserts.
+#
+# These are gated for the same reason the workflows are: they decide what the
+# CI gates actually mean, and no job re-checks them independently.
+#
+# .gdlintrc IS the lint gate. Adding a rule to its `disable:` list makes the
+# `lint` check pass on code it should reject — verified, not assumed. Gating
+# ci.yml but not this file leaves the same hole open one path over.
+#
+# project.godot carries three of CLAUDE.md §2's non-negotiable constraints —
+# the 720x960 viewport with stretch/aspect="keep", worker_pool/max_threads=0,
+# and the gl_compatibility renderer that WebGL 2.0 needs. Unlike
+# export_presets.cfg, which web-export cross-checks twice, nothing in CI
+# asserts any of these, so a PR could quietly change the frame or re-enable
+# threads and every check would still pass.
+#
+# Neither file is touched by ordinary gameplay work, so this does not put
+# Talon back in the path of the PRs he wants other people opening.
+/.gdlintrc                        @talonbaker
+/project.godot                    @talonbaker
