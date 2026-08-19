@@ -1,0 +1,139 @@
+name: Claude Review
+
+# Automated PR review by the Claude GitHub App. It posts a real GitHub review
+# (approve or request changes) under its own bot identity, which is what
+# satisfies the "1 required approving review" branch protection rule for
+# ordinary PRs.
+#
+# Requires:
+#   - the Claude GitHub App installed on this repository (repo admin)
+#   - an ANTHROPIC_API_KEY secret, billed to a separate Anthropic Console
+#     account from any interactive Claude subscription
+#
+# PRs that touch CODEOWNERS-listed files still need Talon's personal approval
+# on top of this one.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: claude-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Draft PRs are still being worked on; reviewing them wastes API budget.
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail fast if the API key is not configured
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not set. The bot reviewer" \
+                 "cannot run, so no PR can collect its required approval." \
+                 "Add the secret in Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "ANTHROPIC_API_KEY is present"
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            You are the automated reviewer for a Godot 4 / GDScript game that
+            ships to a single-threaded Web export on GitHub Pages. The PR
+            branch is already checked out in the working directory.
+
+            FIRST: read `CLAUDE.md` in the repository root. It is the
+            authority for everything below. Do not review from general
+            instinct — review against what that file actually says.
+
+            Then review the diff (`gh pr diff`) against these, in order:
+
+            1. HARD TECHNICAL CONSTRAINTS (CLAUDE.md §2). Any violation is an
+               automatic request-for-changes, no matter how good the code is:
+               - Any 3D node, mesh, 3D physics, or 3D lighting.
+               - Anything assuming threads: `Thread`, `Mutex`, `Semaphore`,
+                 `WorkerThreadPool`, or `variant/thread_support=true` in
+                 `export_presets.cfg`.
+               - Any C#/.NET: `.cs` files, `.csproj`, Mono-only APIs.
+               - Landscape-dependent layout, or changes to the portrait
+                 viewport settings in `project.godot`.
+               - Input needing multi-touch, keyboard, or gamepad. Gameplay
+                 must work with one tap or one click.
+
+            2. PERFORMANCE AND RESOURCE GUARDRAILS (CLAUDE.md §4). These are
+               concrete numbers, not vibes. Check each one and cite the rule:
+               - Node spawning bounded by a NAMED CONSTANT, never by a
+                 data-derived length alone. Flag any loop that instantiates
+                 nodes whose count comes from data size.
+               - No more than 64 simultaneous nodes under one gameplay host.
+               - Every `while` loop provably terminates or has an explicit
+                 iteration cap. Flag any unbounded loop.
+               - No allocation, `load()`, or `instantiate()` inside
+                 `_process()` or `_physics_process()`.
+               - Textures at most 512x512, and only that big with a stated
+                 reason. Flag any new or enlarged asset without justification.
+               - One texture resident per display slot; no accumulating
+                 texture references.
+               - No `preload()` of a whole asset set; bulk content loads
+                 lazily through a manifest.
+               - Every spawned node has an owner that frees it.
+
+            3. GDSCRIPT STYLE CONVENTIONS (CLAUDE.md §3):
+               - Static typing on every variable, parameter, and return type.
+               - Naming: snake_case members, PascalCase classes and nodes,
+                 UPPER_SNAKE_CASE constants, leading underscore for private,
+                 `_on_<source>_<signal>` handlers, past-tense signal names.
+               - Member order: consts → exports → public vars → private vars →
+                 @onready vars → methods. `@onready` comes AFTER plain vars.
+               - `##` docstring on every script and public method.
+               - Unique names (`%Node`) rather than brittle `get_node` paths.
+               - Comments explain WHY, especially for constraint-driven code.
+
+            4. TESTS. New gameplay logic needs GUT coverage in `tests/unit/`.
+               Changes to a guardrail (a spawn cap, a limit) must come with a
+               test asserting the new bound. Pure logic must stay testable
+               without instantiating a scene.
+
+            5. PR DESCRIPTION. It must say what changed, why, and how it was
+               tested/verified. A gameplay change whose description does not
+               mention playing the preview build is incomplete.
+
+            HOW TO REPORT:
+
+            - Use `mcp__github_inline_comment__create_inline_comment` (with
+              `confirmed: true`) for specific line-level problems. Quote the
+              CLAUDE.md rule each one violates.
+            - Then submit ONE actual GitHub review, not a plain comment:
+              - `gh pr review ${{ github.event.pull_request.number }} --request-changes --body "..."`
+                if you found any hard-constraint violation, any guardrail
+                violation, or a real bug.
+              - `gh pr review ${{ github.event.pull_request.number }} --approve --body "..."`
+                only if the diff is clean against all five sections above.
+            - Style nits alone are worth requesting changes ONLY when CI lint
+              would not already catch them. Do not duplicate gdlint.
+            - Be specific and terse. Cite file and line. No praise padding.
+            - Do not post your review as a chat message; only GitHub reviews
+              and inline comments are visible to the team.
+
+          claude_args: |
+            --model claude-sonnet-5
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr review:*),Bash(gh pr comment:*),Read,Grep,Glob"

@@ -1,0 +1,23 @@
+# Code owners for blueberry.
+#
+# There is deliberately NO catch-all `*` rule. Ordinary gameplay PRs need only
+# the automated Claude review, so day-to-day work is not gated on one person.
+#
+# The paths below are load-bearing: they define the environment, the CI gates,
+# and the repo's own protection rules. A PR touching any of them needs Talon's
+# personal approval IN ADDITION to the bot review, even though every
+# collaborator otherwise has full write access.
+
+# Master context and the rules the bot reviewer enforces.
+/CLAUDE.md                        @talonbaker
+
+# CI/CD: the five required checks, the preview deployment, the bot reviewer.
+/.github/workflows/               @talonbaker
+
+# Repo protection and settings.
+/.github/CODEOWNERS               @talonbaker
+/.github/stamp-build.sh           @talonbaker
+/scripts/apply-repo-settings.sh   @talonbaker
+
+# Phase 0 bootstrap: the single source of truth for the environment.
+/scripts/bootstrap.sh             @talonbaker

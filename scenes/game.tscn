@@ -1,0 +1,160 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/game/calendar_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://scripts/game/month_image.gd" id="2_image"]
+[ext_resource type="Script" path="res://scripts/ui/counter_display.gd" id="3_counter"]
+[ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="4_pause"]
+
+[node name="CalendarScreen" type="Control"]
+layout_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_screen")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.106, 0.106, 0.106, 1)
+
+[node name="BlockShadow" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 157.0
+offset_top = 107.0
+offset_right = 577.0
+offset_bottom = 947.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.361)
+
+[node name="ImagePaper" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 100.0
+offset_right = 570.0
+offset_bottom = 520.0
+mouse_filter = 2
+color = Color(0.965, 0.961, 0.949, 1)
+
+[node name="MonthImage" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 190.0
+offset_top = 140.0
+offset_right = 530.0
+offset_bottom = 480.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+script = ExtResource("2_image")
+
+[node name="PageHost" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 150.0
+offset_top = 520.0
+offset_right = 570.0
+offset_bottom = 940.0
+mouse_filter = 1
+
+[node name="CounterDisplay" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 64.0
+offset_top = 6.0
+offset_right = 706.0
+offset_bottom = 74.0
+mouse_filter = 2
+script = ExtResource("3_counter")
+
+[node name="MonthLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 150.0
+offset_top = 74.0
+offset_right = 400.0
+offset_bottom = 98.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.729, 0.725, 0.714, 1)
+theme_override_font_sizes/font_size = 17
+text = "JANUARY"
+vertical_alignment = 1
+
+[node name="BestLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 400.0
+offset_top = 74.0
+offset_right = 570.0
+offset_bottom = 98.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.478, 0.475, 0.467, 1)
+theme_override_font_sizes/font_size = 17
+text = "BEST 0"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="PauseButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 14.0
+offset_top = 12.0
+offset_right = 54.0
+offset_bottom = 52.0
+theme_override_font_sizes/font_size = 17
+text = "II"
+
+[node name="PauseOverlay" type="Control" parent="."]
+unique_name_in_owner = true
+process_mode = 3
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_pause")
+
+[node name="Dim" type="ColorRect" parent="PauseOverlay"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.067, 0.067, 0.067, 0.906)
+
+[node name="PausedLabel" type="Label" parent="PauseOverlay"]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 360.0
+offset_right = 570.0
+offset_bottom = 404.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.965, 0.961, 0.949, 1)
+theme_override_font_sizes/font_size = 34
+text = "PAUSED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ResumeButton" type="Button" parent="PauseOverlay"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 190.0
+offset_top = 450.0
+offset_right = 530.0
+offset_bottom = 508.0
+theme_override_font_sizes/font_size = 21
+text = "RESUME"
+
+[node name="MenuButton" type="Button" parent="PauseOverlay"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 190.0
+offset_top = 522.0
+offset_right = 530.0
+offset_bottom = 580.0
+theme_override_font_sizes/font_size = 21
+text = "MAIN MENU"

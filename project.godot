@@ -1,0 +1,47 @@
+; Engine configuration file.
+; Godot 4.7.1-stable — GDScript only, 2D only, monochrome, single-threaded Web.
+; See CLAUDE.md for the constraints this file encodes, and DESIGN.md for intent.
+
+config_version=5
+
+[application]
+
+config/name="Blueberry"
+config/description="A calendar you cross off, forever."
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://assets/images/icon.svg"
+
+[autoload]
+
+GameState="*res://scripts/autoload/game_state.gd"
+
+[display]
+
+; Portrait, 3:4. The phone is the one true target; every other screen gets the
+; same 3:4 frame, centred and letterboxed, rather than a responsive reflow.
+; That is what stretch/aspect="keep" does — it never changes the shape.
+window/size/viewport_width=720
+window/size/viewport_height=960
+window/size/resizable=true
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/handheld/orientation=1
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+; Monochrome line art on a light ground; this is the letterbox colour too.
+environment/defaults/default_clear_color=Color(0.106, 0.106, 0.106, 1)
+textures/vram_compression/import_etc2_astc=true
+
+[threads]
+
+; The Web target is single-threaded: GitHub Pages cannot serve the COOP/COEP
+; headers that Godot's threaded Web export requires.
+worker_pool/max_threads=0
