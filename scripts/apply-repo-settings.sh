@@ -75,14 +75,15 @@ contexts = json.loads(sys.argv[1])
 print(json.dumps({
     # All four CI checks must pass, against an up-to-date branch.
     "required_status_checks": {"strict": True, "contexts": contexts},
-    # Admin bypass. False means Talon (as the only admin) can force-push,
-    # delete main, or merge without the checks — an escape hatch for the day
-    # something is genuinely wedged. Everyone else is bound regardless, since
-    # collaborators are Members with Write, not Admin.
-    # Set True to bind admins too: safer, but it locks Talon out of his own
-    # escape hatch, and unsticking a bad state then means temporarily
-    # disabling protection by hand.
-    "enforce_admins": False,
+    # Admin bypass, deliberately off: admins are bound by everything below,
+    # exactly like everyone else. Talon chose this over keeping an escape
+    # hatch, on the grounds that a gate the one Admin can step around is not
+    # really a gate — and he is the only Admin.
+    # The cost is real and worth knowing before you hit it: there is now no
+    # way to force-push or merge past a wedged main. Unsticking one means
+    # turning protection off by hand (or re-running this script with False),
+    # fixing the state, and turning it back on.
+    "enforce_admins": True,
     "required_pull_request_reviews": {
         "required_approving_review_count": 1,
         # This is what makes CODEOWNERS binding.
@@ -231,6 +232,8 @@ else:
            f"got {reviews.get('required_approving_review_count')}")
     result(reviews.get("require_code_owner_reviews") is True,
            "CODEOWNERS review required")
+    result(reviews.get("dismiss_stale_reviews") is True,
+           "a new push dismisses stale approvals")
 
     result((prot.get("allow_force_pushes") or {}).get("enabled") is False,
            "force pushes to main blocked")
@@ -238,6 +241,12 @@ else:
            "deleting main blocked")
     result((prot.get("required_linear_history") or {}).get("enabled") is True,
            "linear history required")
+    result((prot.get("required_conversation_resolution") or {}).get("enabled") is True,
+           "review threads must be resolved before merge")
+    # Checked last because it is the one that decides whether any of the above
+    # actually binds the person running this script.
+    result((prot.get("enforce_admins") or {}).get("enabled") is True,
+           "admins bound by protection too (enforce_admins)")
 
 print()
 if failures:
