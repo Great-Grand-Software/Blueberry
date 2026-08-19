@@ -20,6 +20,9 @@ var month_index: int = 0
 ## Which day numbers on the current page have been crossed off, 1-based.
 var marked_days: Dictionary = {}
 
+## Set while a save is waiting for the end of the frame. See `_queue_save`.
+var _save_queued: bool = false
+
 
 func _ready() -> void:
 	load_progress()
@@ -59,7 +62,7 @@ func mark_day(day_number: int) -> bool:
 		marked_days.clear()
 		month_index = CalendarData.normalize_month(month_index + 1)
 		month_completed.emit(month_index)
-	save_progress()
+	_queue_save()
 	return completed
 
 
@@ -70,7 +73,18 @@ func reset_run() -> void:
 	marked_days.clear()
 
 
+## Collapses every mark made in one frame into a single write. One swipe can
+## cross off a whole row before the frame ends, and saving per mark would turn
+## that into seven ConfigFile allocations and seven browser storage writes.
+func _queue_save() -> void:
+	if _save_queued:
+		return
+	_save_queued = true
+	save_progress.call_deferred()
+
+
 func save_progress() -> void:
+	_save_queued = false
 	var config := ConfigFile.new()
 	config.set_value(SAVE_SECTION, "best_days", best_days)
 	config.set_value(SAVE_SECTION, "total_days", total_days)

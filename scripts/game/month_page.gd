@@ -8,8 +8,12 @@ extends Control
 ## spawn guardrail in CLAUDE.md), and it keeps the line work crisp and
 ## monochrome.
 ##
-## Input is one tap hit-tested against the grid, so it satisfies the
-## single-point-of-contact rule without any gesture handling.
+## Input is one point of contact hit-tested against the grid. Pressing marks
+## the day under the point; holding and moving keeps marking each new day the
+## point crosses, so a row can be struck through in one stroke instead of
+## seven separate taps. That is still a single finger or a single button — no
+## second contact is ever consulted — so the single-point-of-contact rule
+## holds.
 
 signal day_tapped(day_number: int)
 signal fold_finished(page: MonthPage)
@@ -33,9 +37,23 @@ const X_INSET: float = 0.26
 ## Seconds for the fold-down. Short enough that a fast tapper is never stalled.
 const FOLD_DURATION: float = 0.38
 
+## How finely a swipe is sampled between two reported positions, as a fraction
+## of the smaller cell dimension. Below 0.5 no whole cell can fall between two
+## samples, which is what stops a fast swipe from skipping days.
+const SWIPE_SAMPLE_FRACTION: float = 0.4
+## Hard cap on samples taken for one movement event. A pointer can jump an
+## arbitrary distance in one frame, so the walk needs a bound that does not
+## come from the data — see the loop guardrail in CLAUDE.md.
+const MAX_SWIPE_SAMPLES: int = 32
+
 var _month_index: int = 0
 var _marked: Dictionary = {}
 var _is_folding: bool = false
+## True between the press that starts a stroke and the release that ends it.
+var _stroke_active: bool = false
+## Where the stroke was last sampled, so the gap to the next position can be
+## walked rather than jumped.
+var _stroke_point: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -73,6 +91,7 @@ func fold_down() -> void:
 	if _is_folding:
 		return
 	_is_folding = true
+	_stroke_active = false
 	mouse_filter = MOUSE_FILTER_IGNORE
 
 	# One finite tween: it always completes, and always frees.
@@ -116,24 +135,87 @@ func _gui_input(event: InputEvent) -> void:
 	if _is_folding:
 		return
 
-	# One point of contact only: a single touch, or a single left click.
-	var point := Vector2.ZERO
+	# One point of contact only: finger zero, or the left mouse button. A
+	# swipe is that same one contact held down and moved, so nothing here
+	# needs a second index or a gesture event.
+	#
+	# Touch is read both as touch/drag and, because the engine emulates a
+	# mouse from touch by default, as button/motion. Marking is idempotent
+	# and the stroke helpers are re-entrant, so handling both is harmless and
+	# means the swipe works even where only one of the pairs arrives.
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
-		if not touch.pressed or touch.index != 0:
+		if touch.index != 0:
 			return
-		point = touch.position
+		if touch.pressed:
+			_begin_stroke(touch.position)
+		else:
+			_end_stroke()
+	elif event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		if drag.index != 0:
+			return
+		_continue_stroke(drag.position)
 	elif event is InputEventMouseButton:
 		var click := event as InputEventMouseButton
-		if not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
+		if click.button_index != MOUSE_BUTTON_LEFT:
 			return
-		point = click.position
-	else:
-		return
+		if click.pressed:
+			_begin_stroke(click.position)
+		else:
+			_end_stroke()
+	elif event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		# Movement with nothing held is just the cursor passing over the page.
+		# This is the gate that makes a missed release harmless: the stroke
+		# flag may go stale, but nothing can be marked without the button.
+		if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+			return
+		_continue_stroke(motion.position)
 
+
+## Starts a stroke and marks the day under the press, so a stroke that never
+## moves is exactly the old single tap.
+func _begin_stroke(point: Vector2) -> void:
+	accept_event()
+	_stroke_active = true
+	_stroke_point = point
+	_mark_at(point)
+
+
+func _end_stroke() -> void:
+	_stroke_active = false
+
+
+## Extends a stroke to `point`, marking every day between there and where the
+## stroke was last seen.
+func _continue_stroke(point: Vector2) -> void:
+	if not _stroke_active:
+		return
+	accept_event()
+
+	# A fast swipe reports few positions, far apart — a whole row can pass
+	# between two of them. Walking the gap in sub-cell steps marks the days
+	# the point actually crossed instead of only the two it was sampled on.
+	var cell: Vector2 = _cell_size()
+	var step: float = maxf(minf(cell.x, cell.y) * SWIPE_SAMPLE_FRACTION, 1.0)
+	var distance: float = _stroke_point.distance_to(point)
+	var samples: int = clampi(int(ceilf(distance / step)), 1, MAX_SWIPE_SAMPLES)
+	for index: int in range(1, samples + 1):
+		# The last mark of a stroke can complete the month and start the fold;
+		# everything after it belongs to a page that is on its way out.
+		if _is_folding:
+			break
+		_mark_at(_stroke_point.lerp(point, float(index) / float(samples)))
+	_stroke_point = point
+
+
+## Reports the day under `point` if it is one and is not already crossed off.
+## The owner marks it back through `mark_day`, so by the next sample this page
+## already knows about it and cannot report the same day twice.
+func _mark_at(point: Vector2) -> void:
 	var day_number: int = day_at_position(point)
 	if day_number > 0 and not _marked.has(day_number):
-		accept_event()
 		day_tapped.emit(day_number)
 
 

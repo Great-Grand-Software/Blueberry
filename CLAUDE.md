@@ -212,9 +212,13 @@ memory both stay flat. Keep it that way.
 **Input**
 
 - All gameplay input reduces to one point of contact. `MonthPage._gui_input`
-  accepts a single `InputEventScreenTouch` (index 0 only) or a single left
-  `InputEventMouseButton`, and nothing else.
-- No handler requiring two simultaneous events.
+  accepts that one contact pressed, moved and released — `InputEventScreenTouch`
+  and `InputEventScreenDrag` at index 0, or `InputEventMouseButton` and
+  `InputEventMouseMotion` for the left button — and nothing else. Holding and
+  moving is one contact, not a gesture; a second index is still ignored
+  everywhere.
+- No handler requiring two simultaneous events, and no gesture events
+  (`InputEventPanGesture`, `InputEventMagnifyGesture`) anywhere.
 - No keyboard or gamepad as the *only* way to do anything. Pause is an
   on-screen button, not the Escape key.
 

@@ -83,10 +83,12 @@ any spare room in the block.
 
 ## 3. Core loop
 
-1. The player taps inside the calendar grid to mark off individual days.
-2. Each tap places an **X** over one day, like crossing a day off a physical
-   wall calendar.
-3. It takes **30 taps** to mark off every day in a month.
+1. The player marks off days inside the calendar grid, either by tapping one
+   at a time or by holding and dragging across several in one stroke.
+2. Each day marked gets an **X**, like crossing a day off a physical wall
+   calendar.
+3. There are **30 days** to get through in a month. A tap crosses off one; a
+   stroke crosses off every day it passes over.
 4. Once every day on the page is marked, the page **folds down** automatically,
    revealing the next month underneath along with that month's line drawing.
 
@@ -95,8 +97,20 @@ rip. `MonthPage.fold_down()` collapses `scale.y` to zero with the pivot at the
 bottom, so the page hinges downward and the next month is revealed from the
 top down.
 
-Re-tapping an already-marked day does nothing. A double-tap can never inflate
-the score.
+**Marking is a tap or a stroke, and a stroke is not a gesture.** Thirty
+separate contacts to clear one page is tiring on a phone and slow everywhere
+else, so a press that is held and moved keeps marking each new day the point
+crosses. That is still the same one finger or one button — nothing here reads
+a second contact, a pinch, or a fling — so the single-point-of-contact rule in
+`CLAUDE.md` §2 is untouched. A press that never moves is exactly the old tap.
+
+A stroke stops at the fold. The mark that completes a month ends the stroke,
+so a swipe can never run on through the page revealed underneath; the player
+lifts and starts again on the new month.
+
+Re-marking an already-marked day does nothing, whether it is re-tapped or
+swiped back over. Nothing can inflate the score by covering the same day
+twice.
 
 ---
 
