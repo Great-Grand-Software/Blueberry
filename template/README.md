@@ -81,16 +81,25 @@ it — frame size, entry scenes, and the guardrail budgets. Everything in
 `scripts/` and `.github/` is project-neutral and carries forward untouched.
 
 ```bash
-ENTRY_SCENES="res://scenes/main.tscn"   # what the smoke test boots
+ENTRY_SCENES="res://scenes/main_menu.tscn res://scenes/game.tscn"
 VIEWPORT_WIDTH=720                      # asserted against project.godot
 VIEWPORT_HEIGHT=960
 MAX_AUTOLOADS=1
 MAX_RASTER_PX=512
 ```
 
-**Then replace the placeholder.** Delete `scripts/game/`, `scripts/ui/`,
-`scenes/` and `tests/unit/`, and write yours. Keep `scripts/autoload/` down to
-one file, or raise `MAX_AUTOLOADS` deliberately.
+**Then replace the placeholder.** Delete `scripts/game/`, `scenes/game.tscn`
+and the tests for them, and write yours. Keep `scripts/autoload/` down to one
+file, or raise `MAX_AUTOLOADS` deliberately.
+
+**Keep the main menu.** `scenes/main_menu.tscn` is the boot scene and ships
+with a working START button that hands off to `scenes/game.tscn`, plus a QUIT
+that hides itself on the web build where quitting means nothing. Every game
+from this template gets a deliberate entry point rather than dropping the
+player straight into play. Change *what START leads to*, not whether it exists
+— `tests/unit/test_main_menu.gd` asserts the button is there and that its
+target scene actually resolves, because a START button pointing at a missing
+scene looks fine in review and dead-ends the player.
 
 **Then rewrite `CLAUDE.md`.** It ships with the constraints that are true of
 *any* Godot Web build — no C#, no threads, no 3D — plus placeholders for the
@@ -164,7 +173,7 @@ a version bump invalidates the cache by construction.
 │   ├── autoload/             ← GameState, the only autoload
 │   ├── game/                 ← pure logic, testable without a scene
 │   └── ui/                   ← screens
-├── scenes/
+├── scenes/                   ← main_menu.tscn (boot) + game.tscn
 ├── tests/unit/               ← GUT suite
 └── .github/workflows/        ← the six checks, previews, deploy
 ```
