@@ -62,9 +62,10 @@ by the git proxy, this is why.
 > rights on the repo. The `plan` subcommand makes no API calls and needs no
 > token, so an agent can still show you exactly what `apply` would write.
 >
-> Be aware that `verify` prints `FAIL` for every setting when it cannot *read*
-> the repo, which is indistinguishable from the settings being wrong. Confirm
-> you are getting real API responses before acting on a failing `verify`.
+> `verify` distinguishes the two failure modes, so read its exit code: **2**
+> means it could not read the repo at all and checked nothing — it prints what
+> GitHub actually said. **1** means it read the repo and the settings genuinely
+> do not match. **0** means every line passed.
 
 ```bash
 export GH_TOKEN=<a token with repo admin rights>

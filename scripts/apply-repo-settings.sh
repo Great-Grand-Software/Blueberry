@@ -148,7 +148,7 @@ cmd_apply() {
 
 	info "applying branch protection to '${BRANCH}'"
 	if api_ok PUT "/repos/${OWNER}/${REPO}/branches/${BRANCH}/protection" "$(protection_payload)" >/dev/null; then
-		pass "branch protection: PRs required, 4 checks, 1 approval, CODEOWNERS binding"
+		pass "branch protection: PRs required, 6 checks, 1 approval, CODEOWNERS binding"
 	else
 		fail "could not apply branch protection (needs admin rights)"
 	fi
@@ -184,6 +184,7 @@ import json, sys
 
 repo_raw, prot_raw, checks_raw = sys.argv[1], sys.argv[2], sys.argv[3]
 want_checks = set(json.loads(checks_raw))
+BRANCH_LABEL = "the default branch"
 failures = 0
 
 def result(ok, label, detail=""):
@@ -202,6 +203,22 @@ try:
 except Exception:
     prot = {}
 
+# Tell "the API would not talk to us" apart from "the settings are wrong".
+# Without this, a 403 renders as every line FAIL, which reads exactly like
+# drift and sends you hunting a problem that is not there. A successful repo
+# read always carries full_name; a successful protection read always carries
+# url. The one exception is a genuine 404 "Branch not protected", which IS a
+# real answer and must stay a FAIL rather than an error.
+prot_absent = str(prot.get("message", "")).lower().startswith("branch not protected")
+if "full_name" not in repo or ("url" not in prot and not prot_absent):
+    said = repo.get("message") or prot.get("message") or "no response from the API"
+    print("  \033[31mERROR\033[0m  could not read the repository from the API")
+    print(f"         GitHub said: {said}")
+    print( "         Nothing was checked. This is NOT a report about your settings.")
+    print( "         Check the token has admin rights on the repo, and that you are")
+    print( "         not running this from an agent session (see SETUP.md step 3).")
+    sys.exit(2)
+
 if not repo:
     result(False, "repo readable", "could not read repo settings")
 else:
@@ -212,7 +229,7 @@ else:
     result(repo.get("delete_branch_on_merge") is True, "auto-delete branch on merge")
 
 if not prot or "required_status_checks" not in prot:
-    result(False, "branch protection", "main is NOT protected, or not readable")
+    result(False, "branch protection", f"{BRANCH_LABEL} is not protected")
 else:
     got_checks = set(prot.get("required_status_checks", {}).get("contexts", []))
     result(want_checks <= got_checks,
