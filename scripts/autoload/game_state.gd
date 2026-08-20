@@ -1,24 +1,30 @@
 extends Node
-## Process-wide game state: the raw day count, the calendar position, and the
-## locally saved personal best.
+## Process-wide game state: points, which calendar is on the wall, how far
+## through the year it has been ripped, and the locally saved best.
 ##
 ## Autoloaded as `GameState`. There is no end state — no win, no loss, no cap.
-## The count simply climbs for as long as anyone keeps tapping.
+## The calendar keeps going for as long as anyone keeps ripping.
 
-signal day_marked(total_days: int)
-signal month_completed(month_index: int)
+signal calendar_ripped(elapsed_days: int)
+signal points_changed(points: int)
+signal holidays_collected(names: PackedStringArray)
+signal tier_changed(tier_index: int)
 
 const SAVE_PATH: String = "user://blueberry.cfg"
 const SAVE_SECTION: String = "progress"
 
-## Every day ever tapped in this run. This is the score.
-var total_days: int = 0
-## The best `total_days` ever reached on this device.
-var best_days: int = 0
-## Which of the twelve months is on top. Wraps forever.
-var month_index: int = 0
-## Which day numbers on the current page have been crossed off, 1-based.
-var marked_days: Dictionary = {}
+## Points earned. One per holiday ripped past; ordinary days award nothing.
+var points: int = 0
+## The most points ever held at once on this device.
+var best_points: int = 0
+## Which of the four calendars is on the wall. See CalendarTier.
+var tier_index: int = 0
+## Days ripped away on the current calendar. Resets when a tier is bought.
+var elapsed_days: int = 0
+## Pages ripped on the current calendar, whatever each one was worth.
+var total_rips: int = 0
+## Holidays collected on the current calendar.
+var holiday_count: int = 0
 
 ## Set while a save is waiting for the end of the frame. See `_queue_save`.
 var _save_queued: bool = false
@@ -28,54 +34,87 @@ func _ready() -> void:
 	load_progress()
 
 
-## Human-readable name of the month currently on top.
-func current_month_name() -> String:
-	return CalendarData.month_name(month_index)
+## Day-of-year (0-based) the page currently on the wall opens on.
+func current_year_day() -> int:
+	return DayCounter.year_day_of(elapsed_days)
 
 
-## How many days on the current page are still unmarked.
-func days_remaining() -> int:
-	return CalendarData.DAYS_PER_MONTH - marked_days.size()
+## How many days the page on the wall covers — one at Daily, a whole year at
+## Yearly, and the real length of the month or quarter in between.
+func current_span_days() -> int:
+	return CalendarTier.span_days(tier_index, current_year_day())
 
 
-## True if `day_number` on the current page has already been crossed off.
-func is_day_marked(day_number: int) -> bool:
-	return marked_days.has(day_number)
+## The holidays printed on the page currently on the wall, in date order.
+## Empty on most pages; that is the point.
+func current_holidays() -> PackedStringArray:
+	return HolidayData.names_in_span(current_year_day(), current_span_days())
 
 
-## Crosses off one day. Returns true when that tap completed the month.
-## Re-tapping an already-marked day does nothing and returns false, so a
-## double-tap can never inflate the score.
-func mark_day(day_number: int) -> bool:
-	if day_number < 1 or day_number > CalendarData.DAYS_PER_MONTH:
-		return false
-	if marked_days.has(day_number):
-		return false
+## Rips the page off. Advances the calendar by whatever this tier's page
+## covers and banks a point for every holiday that page held. Returns the
+## holidays collected, so the caller can show them without recomputing.
+func rip_page() -> PackedStringArray:
+	var collected: PackedStringArray = current_holidays()
 
-	marked_days[day_number] = true
-	total_days += 1
-	best_days = maxi(best_days, total_days)
-	day_marked.emit(total_days)
+	elapsed_days += current_span_days()
+	total_rips += 1
+	calendar_ripped.emit(elapsed_days)
 
-	var completed: bool = marked_days.size() >= CalendarData.DAYS_PER_MONTH
-	if completed:
-		marked_days.clear()
-		month_index = CalendarData.normalize_month(month_index + 1)
-		month_completed.emit(month_index)
+	if not collected.is_empty():
+		holiday_count += collected.size()
+		points += collected.size() * HolidayData.POINTS_PER_HOLIDAY
+		best_points = maxi(best_points, points)
+		holidays_collected.emit(collected)
+		points_changed.emit(points)
+
 	_queue_save()
-	return completed
+	return collected
 
 
-## Starts a fresh run at January day one. The personal best survives.
+## Points needed for the next calendar, or -1 when there is none left to buy.
+func next_tier_cost() -> int:
+	return CalendarTier.upgrade_cost(tier_index)
+
+
+## True when a next calendar exists and the points are already in hand.
+func can_afford_upgrade() -> bool:
+	if not CalendarTier.has_upgrade(tier_index):
+		return false
+	return points >= next_tier_cost()
+
+
+## Buys the next calendar. Spends the points, swaps the tier, and starts the
+## new calendar back at the 1st of January — a new object, not a faster old
+## one. Returns false and changes nothing if it cannot be afforded.
+func buy_upgrade() -> bool:
+	if not can_afford_upgrade():
+		return false
+
+	points -= next_tier_cost()
+	tier_index = CalendarTier.normalize(tier_index + 1)
+	elapsed_days = 0
+	total_rips = 0
+	holiday_count = 0
+
+	tier_changed.emit(tier_index)
+	points_changed.emit(points)
+	_queue_save()
+	return true
+
+
+## Starts over on the first calendar. The personal best survives.
 func reset_run() -> void:
-	total_days = 0
-	month_index = 0
-	marked_days.clear()
+	points = 0
+	tier_index = 0
+	elapsed_days = 0
+	total_rips = 0
+	holiday_count = 0
 
 
-## Collapses every mark made in one frame into a single write. One swipe can
-## cross off a whole row before the frame ends, and saving per mark would turn
-## that into seven ConfigFile allocations and seven browser storage writes.
+## Collapses every change made in one frame into a single write. A rip can
+## move several counters at once, and saving per counter would turn that into
+## several ConfigFile allocations and several browser storage writes.
 func _queue_save() -> void:
 	if _save_queued:
 		return
@@ -86,10 +125,12 @@ func _queue_save() -> void:
 func save_progress() -> void:
 	_save_queued = false
 	var config := ConfigFile.new()
-	config.set_value(SAVE_SECTION, "best_days", best_days)
-	config.set_value(SAVE_SECTION, "total_days", total_days)
-	config.set_value(SAVE_SECTION, "month_index", month_index)
-	config.set_value(SAVE_SECTION, "marked_days", marked_days.keys())
+	config.set_value(SAVE_SECTION, "points", points)
+	config.set_value(SAVE_SECTION, "best_points", best_points)
+	config.set_value(SAVE_SECTION, "tier_index", tier_index)
+	config.set_value(SAVE_SECTION, "elapsed_days", elapsed_days)
+	config.set_value(SAVE_SECTION, "total_rips", total_rips)
+	config.set_value(SAVE_SECTION, "holiday_count", holiday_count)
 	var error: int = config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("Could not save progress to %s (error %d)" % [SAVE_PATH, error])
@@ -99,14 +140,35 @@ func load_progress() -> void:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
 		return
-	best_days = config.get_value(SAVE_SECTION, "best_days", 0)
-	total_days = config.get_value(SAVE_SECTION, "total_days", 0)
-	month_index = CalendarData.normalize_month(config.get_value(SAVE_SECTION, "month_index", 0))
 
-	# A hand-edited save must not be able to put the page in an impossible
-	# state, so every restored day is range-checked on the way in.
-	marked_days.clear()
-	for day: Variant in config.get_value(SAVE_SECTION, "marked_days", []):
-		var day_number: int = int(day)
-		if day_number >= 1 and day_number <= CalendarData.DAYS_PER_MONTH:
-			marked_days[day_number] = true
+	# A hand-edited save must not be able to put the wall in an impossible
+	# state, so everything restored is clamped on the way in.
+	points = maxi(int(config.get_value(SAVE_SECTION, "points", 0)), 0)
+	best_points = maxi(int(config.get_value(SAVE_SECTION, "best_points", 0)), points)
+	tier_index = CalendarTier.normalize(int(config.get_value(SAVE_SECTION, "tier_index", 0)))
+	elapsed_days = maxi(int(config.get_value(SAVE_SECTION, "elapsed_days", 0)), 0)
+	total_rips = maxi(int(config.get_value(SAVE_SECTION, "total_rips", 0)), 0)
+	holiday_count = maxi(int(config.get_value(SAVE_SECTION, "holiday_count", 0)), 0)
+
+	# Monthly and quarterly pages only line up with real month boundaries if
+	# the calendar starts on one. A restored position that does not is snapped
+	# back rather than left to drift a page at a time.
+	elapsed_days = _snap_to_page_boundary(elapsed_days)
+
+
+## Rounds an elapsed-day count down to the start of the page it falls inside,
+## so every rip from here lands on a real boundary. Bounded by the number of
+## pages in a year at the coarsest tier, never by the data.
+func _snap_to_page_boundary(days: int) -> int:
+	var year_day: int = DayCounter.year_day_of(days)
+	if CalendarTier.span_days(tier_index, 0) == 1:
+		return days
+
+	var whole_years: int = days - year_day
+	var cursor: int = 0
+	for _page: int in CalendarTier.taps_per_year(tier_index):
+		var span: int = CalendarTier.span_days(tier_index, cursor)
+		if year_day < cursor + span:
+			return whole_years + cursor
+		cursor += span
+	return whole_years

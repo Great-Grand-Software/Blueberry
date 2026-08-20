@@ -1,11 +1,14 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
-[ext_resource type="Script" path="res://scripts/game/calendar_screen.gd" id="1_screen"]
-[ext_resource type="Script" path="res://scripts/game/month_image.gd" id="2_image"]
-[ext_resource type="Script" path="res://scripts/ui/counter_display.gd" id="3_counter"]
-[ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="4_pause"]
+[ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="1_screen"]
+[ext_resource type="Script" path="res://scripts/ui/view_pager.gd" id="2_pager"]
+[ext_resource type="Script" path="res://scripts/ui/stats_view.gd" id="3_stats"]
+[ext_resource type="Script" path="res://scripts/game/calendar_view.gd" id="4_calendar"]
+[ext_resource type="Script" path="res://scripts/ui/store_view.gd" id="5_store"]
+[ext_resource type="Script" path="res://scripts/ui/header_bar.gd" id="6_header"]
+[ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="7_pause"]
 
-[node name="CalendarScreen" type="Control"]
+[node name="GameScreen" type="Control"]
 layout_mode = 3
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -20,85 +23,60 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.106, 0.106, 0.106, 1)
+color = Color(0.929, 0.925, 0.914, 1)
 
-[node name="BlockShadow" type="ColorRect" parent="."]
+[node name="ViewPager" type="Control" parent="."]
+unique_name_in_owner = true
+clip_contents = true
 layout_mode = 0
-offset_left = 147.0
-offset_top = 107.0
-offset_right = 587.0
+offset_top = 96.0
+offset_right = 720.0
 offset_bottom = 960.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0.361)
+script = ExtResource("2_pager")
 
-[node name="ImagePaper" type="ColorRect" parent="."]
-layout_mode = 0
-offset_left = 140.0
-offset_top = 100.0
-offset_right = 580.0
-offset_bottom = 520.0
-mouse_filter = 2
-color = Color(0.965, 0.961, 0.949, 1)
-
-[node name="MonthImage" type="TextureRect" parent="."]
+[node name="Track" type="Control" parent="ViewPager"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 180.0
-offset_top = 140.0
-offset_right = 540.0
-offset_bottom = 480.0
+offset_right = 2160.0
+offset_bottom = 864.0
 mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-script = ExtResource("2_image")
 
-[node name="PageHost" type="Control" parent="."]
+[node name="StatsView" type="Control" parent="ViewPager/Track"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 140.0
-offset_top = 520.0
-offset_right = 580.0
-offset_bottom = 960.0
-mouse_filter = 1
+offset_right = 720.0
+offset_bottom = 864.0
+mouse_filter = 2
+script = ExtResource("3_stats")
 
-[node name="CounterDisplay" type="Control" parent="."]
+[node name="CalendarView" type="Control" parent="ViewPager/Track"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 64.0
-offset_top = 6.0
-offset_right = 706.0
-offset_bottom = 74.0
+offset_left = 720.0
+offset_right = 1440.0
+offset_bottom = 864.0
 mouse_filter = 2
-script = ExtResource("3_counter")
+script = ExtResource("4_calendar")
 
-[node name="MonthLabel" type="Label" parent="."]
+[node name="StoreView" type="Control" parent="ViewPager/Track"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 150.0
-offset_top = 74.0
-offset_right = 400.0
-offset_bottom = 98.0
+offset_left = 1440.0
+offset_right = 2160.0
+offset_bottom = 864.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.729, 0.725, 0.714, 1)
-theme_override_font_sizes/font_size = 17
-text = "JANUARY"
-vertical_alignment = 1
+script = ExtResource("5_store")
 
-[node name="BestLabel" type="Label" parent="."]
+[node name="HeaderBar" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 400.0
-offset_top = 74.0
-offset_right = 570.0
-offset_bottom = 98.0
+offset_right = 720.0
+offset_bottom = 96.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.478, 0.475, 0.467, 1)
-theme_override_font_sizes/font_size = 17
-text = "BEST 0"
-horizontal_alignment = 2
-vertical_alignment = 1
+script = ExtResource("6_header")
 
-[node name="PauseButton" type="Button" parent="."]
+[node name="PauseButton" type="Button" parent="HeaderBar"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 14.0
@@ -108,6 +86,46 @@ offset_bottom = 52.0
 theme_override_font_sizes/font_size = 17
 text = "II"
 
+[node name="PointsLabel" type="Label" parent="HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 66.0
+offset_top = 8.0
+offset_right = 190.0
+offset_bottom = 62.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.965, 0.961, 0.949, 1)
+theme_override_font_sizes/font_size = 40
+text = "0"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="TierLabel" type="Label" parent="HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 250.0
+offset_top = 12.0
+offset_right = 620.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.549, 0.545, 0.533, 1)
+theme_override_font_sizes/font_size = 15
+text = "DAILY CALENDAR"
+vertical_alignment = 1
+
+[node name="DateLabel" type="Label" parent="HeaderBar"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 250.0
+offset_top = 38.0
+offset_right = 620.0
+offset_bottom = 68.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.965, 0.961, 0.949, 1)
+theme_override_font_sizes/font_size = 20
+text = "1 JAN  YEAR 1"
+vertical_alignment = 1
+
 [node name="PauseOverlay" type="Control" parent="."]
 unique_name_in_owner = true
 process_mode = 3
@@ -116,7 +134,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("4_pause")
+script = ExtResource("7_pause")
 
 [node name="Dim" type="ColorRect" parent="PauseOverlay"]
 layout_mode = 1

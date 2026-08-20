@@ -14,7 +14,7 @@ const GAME_SCENE: String = "res://scenes/game.tscn"
 func _ready() -> void:
 	_start_button.pressed.connect(_on_start_button_pressed)
 	_quit_button.pressed.connect(_on_quit_button_pressed)
-	_best_label.text = "BEST  %s" % DayCounter.format_all(GameState.best_days)
+	_best_label.text = "BEST  %d POINTS" % GameState.best_points
 	# On the Web the player closes the tab; a Quit button there does nothing.
 	_quit_button.visible = not OS.has_feature("web")
 

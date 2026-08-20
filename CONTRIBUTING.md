@@ -171,7 +171,7 @@ rule, so day-to-day work is never gated on one person.
 
 ## Filling an open slot
 
-`DESIGN.md` §7 lists what is deliberately undesigned — milestones, whether the
+`DESIGN.md` §9 lists what is deliberately undesigned — milestones, whether the
 image theme ever changes, sound and animation, meta systems. If your PR decides
 one of those, **update `DESIGN.md` in the same PR** and say what you decided.
 An open slot quietly filled is worse than one still open.

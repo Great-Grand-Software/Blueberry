@@ -41,7 +41,7 @@ offset_bottom = 388.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.549, 0.545, 0.533, 1)
 theme_override_font_sizes/font_size = 18
-text = "a calendar you cross off, forever"
+text = "rip the days off, forever"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -55,7 +55,7 @@ offset_bottom = 458.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.729, 0.725, 0.714, 1)
 theme_override_font_sizes/font_size = 18
-text = "BEST  000 0 0 0 00 00"
+text = "BEST  0 POINTS"
 horizontal_alignment = 1
 vertical_alignment = 1
 
