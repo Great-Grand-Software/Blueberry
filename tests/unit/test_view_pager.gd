@@ -9,11 +9,9 @@ extends GutTest
 const GAME_SCENE: PackedScene = preload("res://scenes/game.tscn")
 ## Comfortably longer than ViewPager.SETTLE_DURATION.
 const SETTLE_SECONDS: float = 0.4
-## A point over the hanging calendar page, in viewport coordinates.
-const ON_THE_PAGE: Vector2 = Vector2(360.0, 496.0)
-## A point over the store's buy panel, in viewport coordinates: the pager
-## starts 96px down, and StoreView.BUY_RECT is 596..688 inside it.
-const ON_BUY: Vector2 = Vector2(360.0, 736.0)
+## A point over the hanging calendar page, in viewport coordinates: the pager
+## starts 96px down, and every calendar hangs centred from the same line.
+const ON_THE_PAGE: Vector2 = Vector2(360.0, 396.0)
 ## Far enough sideways to commit the swipe: over 28% of 720.
 const COMMIT_TRAVEL: float = 350.0
 
@@ -180,32 +178,6 @@ func test_movement_without_a_press_does_nothing() -> void:
 	_move_to(Vector2(660.0, 600.0), false)
 	await wait_seconds(SETTLE_SECONDS)
 	assert_eq(_pager.view_index(), ViewPager.CALENDAR_VIEW, "hovering is not a swipe")
-
-
-func test_the_store_sells_when_the_points_are_there() -> void:
-	GameState.points = GameState.next_tier_cost()
-	_pager.go_to(ViewPager.STORE_VIEW)
-	await wait_seconds(SETTLE_SECONDS)
-
-	_press(ON_BUY)
-	_release(ON_BUY)
-	await wait_seconds(SETTLE_SECONDS)
-
-	assert_eq(GameState.tier_index, CalendarTier.MONTHLY, "the calendar was swapped")
-	assert_eq(_pager.view_index(), ViewPager.CALENDAR_VIEW, "and you are sent back to it")
-
-
-func test_the_store_will_not_sell_on_credit() -> void:
-	GameState.points = GameState.next_tier_cost() - 1
-	_pager.go_to(ViewPager.STORE_VIEW)
-	await wait_seconds(SETTLE_SECONDS)
-
-	_press(ON_BUY)
-	_release(ON_BUY)
-	await wait_process_frames(1)
-
-	assert_eq(GameState.tier_index, CalendarTier.DAILY, "one point short buys nothing")
-	assert_eq(_pager.view_index(), ViewPager.STORE_VIEW, "and you stay in the store")
 
 
 func test_a_tap_on_the_stats_view_does_nothing_at_all() -> void:

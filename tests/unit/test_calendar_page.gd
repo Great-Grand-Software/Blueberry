@@ -61,9 +61,36 @@ func test_a_page_deep_into_the_future_still_reads_a_real_date() -> void:
 
 
 func test_the_page_carries_the_drawing_for_its_month() -> void:
-	_page.configure(CalendarTier.DAILY, CalendarData.month_start_day(6))
+	_page.configure(CalendarTier.MONTHLY, CalendarData.month_start_day(6))
 	var illustration: MonthImage = _page.get_node("%Illustration")
+	assert_true(illustration.visible, "the month sheet is the one with the big picture")
 	assert_eq(illustration.month_index(), 6, "July")
+
+
+func test_the_daily_block_has_no_room_for_a_picture() -> void:
+	# A small square block shows the day and nothing else, which is what makes
+	# it read as a different object rather than a shrunken month sheet.
+	_page.configure(CalendarTier.DAILY, 0)
+	assert_false(_page.get_node("%Illustration").visible)
+
+
+func test_the_wider_calendars_carry_the_drawing_as_a_header_mark() -> void:
+	for tier: int in [CalendarTier.QUARTERLY, CalendarTier.YEARLY]:
+		_page.configure(tier, CalendarData.month_start_day(9))
+		var illustration: MonthImage = _page.get_node("%Illustration")
+		assert_true(illustration.visible, CalendarTier.tier_name(tier))
+		assert_lte(illustration.size.x, 120.0, "small enough to be a header mark")
+		assert_eq(illustration.month_index(), 9, "October")
+
+
+func test_a_page_takes_the_shape_of_its_own_calendar() -> void:
+	for tier: int in CalendarTier.TIER_COUNT:
+		_page.configure(tier, 0)
+		assert_eq(
+			_page.size,
+			CalendarPage.page_size(tier),
+			"a %s page is its own size" % CalendarTier.tier_name(tier)
+		)
 
 
 func test_ripping_is_idempotent_and_frees_the_page() -> void:

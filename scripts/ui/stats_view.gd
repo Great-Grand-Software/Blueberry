@@ -6,11 +6,6 @@ extends Control
 ## Drawn in one `_draw()` rather than a label per row, for the same reason the
 ## calendar pages are: the row list is fixed, and nodes are the scarce thing.
 
-const WALL: Color = Color(0.929, 0.925, 0.914)
-const INK: Color = Color(0.106, 0.106, 0.106)
-const MUTED: Color = Color(0.545, 0.541, 0.529)
-const RULE: Color = Color(0.788, 0.784, 0.773)
-
 const MARGIN: float = 64.0
 const TITLE_BASELINE: float = 96.0
 const FIRST_ROW_BASELINE: float = 190.0
@@ -66,14 +61,20 @@ func _next_calendar_text() -> String:
 
 func _draw() -> void:
 	var font: Font = ThemeDB.fallback_font
-	draw_rect(Rect2(Vector2.ZERO, size), WALL, true)
+	draw_rect(Rect2(Vector2.ZERO, size), Palette.WALL, true)
 	draw_string(
-		font, Vector2(MARGIN, TITLE_BASELINE), "PROGRESS", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 34, INK
+		font,
+		Vector2(MARGIN, TITLE_BASELINE),
+		"PROGRESS",
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		34,
+		Palette.INK
 	)
 	draw_line(
 		Vector2(MARGIN, TITLE_BASELINE + 22.0),
 		Vector2(size.x - MARGIN, TITLE_BASELINE + 22.0),
-		INK,
+		Palette.INK,
 		2.0
 	)
 
@@ -87,7 +88,7 @@ func _draw() -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1.0,
 			LABEL_SIZE,
-			MUTED
+			Palette.MUTED
 		)
 		draw_string(
 			font,
@@ -96,8 +97,11 @@ func _draw() -> void:
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1.0,
 			VALUE_SIZE,
-			INK
+			Palette.INK
 		)
 		draw_line(
-			Vector2(MARGIN, baseline + 42.0), Vector2(size.x - MARGIN, baseline + 42.0), RULE, 1.0
+			Vector2(MARGIN, baseline + 42.0),
+			Vector2(size.x - MARGIN, baseline + 42.0),
+			Palette.RULE,
+			1.0
 		)

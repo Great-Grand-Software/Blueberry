@@ -4,10 +4,11 @@ extends GutTest
 const GAME_SCENE: PackedScene = preload("res://scenes/game.tscn")
 ## Comfortably longer than the tear plus the fall.
 const RIP_SETTLE_SECONDS: float = 0.8
-## A point on the hanging page, in view-local coordinates.
-const ON_THE_PAGE: Vector2 = Vector2(360.0, 400.0)
-## A point on the bare wall below it.
-const ON_THE_WALL: Vector2 = Vector2(360.0, 820.0)
+## A point on the hanging page, in view-local coordinates. Every calendar
+## hangs from the same line and is centred, so one point lands on all four.
+const ON_THE_PAGE: Vector2 = Vector2(360.0, 300.0)
+## A point on the bare wall below the longest of them.
+const ON_THE_WALL: Vector2 = Vector2(360.0, 830.0)
 
 var _screen: Control
 var _view: CalendarView
@@ -102,6 +103,77 @@ func test_ripping_faster_than_the_fall_cannot_pile_up_sheets() -> void:
 	)
 	await wait_seconds(RIP_SETTLE_SECONDS)
 	assert_eq(_count_page_nodes(), CalendarView.MAX_LIVE_PAGES, "the sheets all cleared")
+
+
+func test_each_calendar_is_a_different_shape() -> void:
+	# Four calendars, four objects — a daily block is not a monthly sheet with
+	# less on it. The daily one is the smallest, and square-ish.
+	var seen: Dictionary = {}
+	for tier: int in CalendarTier.TIER_COUNT:
+		var face: Vector2 = CalendarPage.page_size(tier)
+		assert_false(
+			seen.has(face), "%s reuses another tier's shape" % CalendarTier.tier_name(tier)
+		)
+		seen[face] = true
+		assert_lte(face.x, 640.0, "%s must fit the wall" % CalendarTier.tier_name(tier))
+		assert_lte(
+			face.y + CalendarView.BACKING_HEIGHT,
+			CalendarView.HANGING_REGION,
+			"%s must fit between the tack and the flash band" % CalendarTier.tier_name(tier)
+		)
+
+	var daily: Vector2 = CalendarPage.page_size(CalendarTier.DAILY)
+	var monthly: Vector2 = CalendarPage.page_size(CalendarTier.MONTHLY)
+	assert_lt(daily.x, monthly.x, "the daily block is smaller than the month sheet")
+	assert_lt(daily.y, monthly.y)
+	assert_almost_eq(daily.x / daily.y, 1.0, 0.15, "and it is roughly square")
+	assert_gt(
+		CalendarPage.page_size(CalendarTier.QUARTERLY).x,
+		CalendarPage.page_size(CalendarTier.QUARTERLY).y,
+		"the quarterly sheet is a landscape rectangle"
+	)
+
+
+func test_every_calendar_is_centred_on_the_wall_whatever_shape_it_is() -> void:
+	for tier: int in CalendarTier.TIER_COUNT:
+		GameState.tier_index = tier
+		_view.rebuild()
+		await wait_process_frames(1)
+
+		var page: Rect2 = _view.page_rect()
+		var backing: Rect2 = _view.backing_rect()
+		var label: String = CalendarTier.tier_name(tier)
+
+		assert_almost_eq(
+			page.position.x + page.size.x * 0.5, _view.size.x * 0.5, 1.0, "%s centred" % label
+		)
+		assert_eq(backing.size.x, page.size.x, "%s: the stub is as wide as the sheet" % label)
+		assert_almost_eq(backing.end.y, page.position.y + 6.0, 0.1, "%s hangs off it" % label)
+		assert_gte(backing.position.y, CalendarView.MIN_BACKING_TOP, "%s clears the band" % label)
+		assert_lte(
+			page.end.y, CalendarView.HANGING_REGION, "%s stays out of the flash band" % label
+		)
+		# Balanced: the gap above the stub matches the gap below the sheet.
+		assert_almost_eq(
+			backing.position.y,
+			CalendarView.HANGING_REGION - page.end.y,
+			1.5,
+			"%s sits level on the wall" % label
+		)
+		assert_eq(_pinned_pages()[0].position, page.position, "and the page is placed there")
+
+
+func test_a_tap_lands_on_whichever_calendar_is_hanging() -> void:
+	for tier: int in CalendarTier.TIER_COUNT:
+		GameState.reset_run()
+		GameState.tier_index = tier
+		_view.rebuild()
+		await wait_process_frames(1)
+
+		_view.handle_tap(ON_THE_WALL)
+		assert_eq(GameState.total_rips, 0, "the bare wall is never tappable")
+		_view.handle_tap(ON_THE_PAGE)
+		assert_eq(GameState.total_rips, 1, "the %s page is" % CalendarTier.tier_name(tier))
 
 
 func test_a_bought_calendar_replaces_the_one_on_the_wall() -> void:

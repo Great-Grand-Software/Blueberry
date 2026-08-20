@@ -7,10 +7,6 @@ extends Control
 ## The band sits above the pager, so the pause button in it is the one control
 ## the swipe handler deliberately leaves alone.
 
-const INK: Color = Color(0.106, 0.106, 0.106)
-const PAPER: Color = Color(0.965, 0.961, 0.949)
-const MUTED: Color = Color(0.549, 0.545, 0.533)
-
 ## The three view dots, bottom right of the band.
 const DOT_COUNT: int = 3
 const DOT_RADIUS: float = 4.0
@@ -46,13 +42,15 @@ func set_view(view_index: int) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), INK, true)
+	draw_rect(Rect2(Vector2.ZERO, size), Palette.BAND, true)
 	var font: Font = ThemeDB.fallback_font
-	draw_string(font, CAPTION_ORIGIN, "PTS", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, MUTED)
+	draw_string(
+		font, CAPTION_ORIGIN, "PTS", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, Palette.BAND_MUTED
+	)
 
 	for dot: int in DOT_COUNT:
 		var centre: Vector2 = DOT_CENTRE + Vector2((dot - 1) * DOT_SPACING, 0.0)
 		if dot == _view_index:
-			draw_circle(centre, DOT_RADIUS, PAPER, true)
+			draw_circle(centre, DOT_RADIUS, Palette.BAND_TEXT, true)
 		else:
-			draw_circle(centre, DOT_RADIUS, MUTED, false, 1.0)
+			draw_circle(centre, DOT_RADIUS, Palette.BAND_MUTED, false, 1.0)

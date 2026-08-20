@@ -111,6 +111,59 @@ else
 	fail "more than one autoload (${autoload_count}) — see CLAUDE.md §3"
 fi
 
+# --- One accent, everything else neutral ----------------------------------
+# The game is greyscale apart from a single pale blue, used only on the store's
+# buy button. That rule erodes the moment a second hue lands anywhere, and it
+# is not something a reviewer can hold in their head across a whole diff, so it
+# is checked instead of trusted.
+#
+# The test is chroma, not r == g == b: the ink and paper are deliberately warm
+# neutrals (0.965, 0.961, 0.949 and the like), so an exact-grey rule would fail
+# the palette it exists to protect. Anything with a chroma under NEUTRAL is
+# read as grey; the accent sits at 0.208, four times over the line, and so does
+# any real colour someone might add.
+colour_report="$(python3 - <<'PYCOLOUR'
+import re
+import subprocess
+
+ACCENT = (0.647, 0.784, 0.855)
+NEUTRAL = 0.05
+NUMBER = r"-?\d+(?:\.\d+)?"
+LITERAL = re.compile(
+    r"Color\(\s*({n})\s*,\s*({n})\s*,\s*({n})\s*(?:,\s*{n}\s*)?\)".format(n=NUMBER)
+)
+
+listed = subprocess.run(
+    ["git", "ls-files", "--", "*.gd", "*.tscn"], capture_output=True, text=True
+).stdout.split()
+
+problems = []
+for path in listed:
+    if path.startswith("addons/"):
+        continue
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+    except OSError:
+        continue
+    for number, line in enumerate(lines, 1):
+        for match in LITERAL.finditer(line):
+            rgb = tuple(round(float(value), 3) for value in match.groups())
+            if rgb == ACCENT or max(rgb) - min(rgb) <= NEUTRAL:
+                continue
+            problems.append(
+                "%s:%d: %s is neither neutral nor the accent" % (path, number, match.group(0))
+            )
+print("\n".join(problems))
+PYCOLOUR
+)"
+if [[ -z "${colour_report}" ]]; then
+	pass "one accent only (pale blue), everything else neutral"
+else
+	mapfile -t hits <<<"${colour_report}"
+	fail "colour outside the palette — see CLAUDE.md §2" "${hits[@]}"
+fi
+
 # --- Raster budget --------------------------------------------------------
 # SVG line art is preferred; rasters are capped at 512x512. Reads the PNG
 # header directly so this needs no image library.

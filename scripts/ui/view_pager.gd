@@ -121,10 +121,16 @@ func _input(event: InputEvent) -> void:
 		_drag_to(motion.position)
 
 
-## Takes the contact, if it started inside the pager. A press on the UI band
-## above — the pause button lives there — is left alone.
+## Takes the contact, if it started inside the pager and nothing in the view
+## wants it for itself. A press on the UI band above — the pause button lives
+## there — is left alone for the same reason: real `Button` nodes handle their
+## own contact, and a control that swallows one cannot also be swiped from.
+## That is the standard trade, and it is why the buy button is the only thing
+## in a view allowed to claim one.
 func _press(point: Vector2) -> void:
 	if not get_global_rect().has_point(point):
+		return
+	if _view_swallows(point):
 		return
 	if _settle_tween != null and _settle_tween.is_valid():
 		_settle_tween.kill()
@@ -174,6 +180,15 @@ func _settle_to_nearest(travel_x: float) -> void:
 		# Dragging left pulls the next view in from the right.
 		target = _view_index + (1 if travel_x < 0.0 else -1)
 	go_to(target)
+
+
+## True if the view showing has a control of its own under this point, which
+## it will receive through the normal GUI path instead.
+func _view_swallows(point: Vector2) -> bool:
+	var view: Control = current_view()
+	if view == null or not view.has_method("swallows_contact"):
+		return false
+	return bool(view.call("swallows_contact", point - view.global_position))
 
 
 ## Hands a tap to the view showing, in that view's own coordinates. Views opt

@@ -50,8 +50,8 @@ A fixed UI band across the top, and everything else in a pager beneath it.
 │      │  ○ backing + tack │      │  one of three views
 │      ├───────────────────┤      │
 │      │                   │      │
-│      │  the calendar     │      │  page: 440x620 at (140, 104)
-│      │  page hanging     │      │  inside the view
+│      │  the calendar     │      │  the sheet — sized by tier
+│      │  page hanging     │      │  and centred in the view
 │      │  off the tack     │      │
 │      │                   │      │
 │      └───────────────────┘      │
@@ -74,10 +74,10 @@ strip, and the current page hanging off it. That is the whole scene. It is
 bare on purpose: dressing the wall is a progression reward, not part of this
 build. See §9.
 
-**A geometric note.** The page is 440x620, which is as tall as it can be while
-leaving room below for the point flash and the panel seam. Everything on the
-page is budgeted against that: illustration 180, title 48, body 252, holiday
-strip 52. If one grows, another has to give.
+**A geometric note.** The page size is per tier — see §4 — and each has to fit
+between the tack and the point flash, inside the 792px at the top of the wall.
+The tallest is the monthly sheet at 690, which leaves 68px of headroom. Grow a
+page past that and the flash badge starts landing on it.
 
 ---
 
@@ -107,15 +107,30 @@ mean something: a page is a page whether it is one day or a whole year.
 Each tier is a **distinct calendar object**, not a multiplier on the same one.
 Buying one swaps the object entirely and starts it back at the 1st of January.
 
-| Tier | Rips per year | The page shows |
-|---|---|---|
-| Daily | 365 | one enormous day number, and which day of 365 it is |
-| Monthly | 12 | the month as a real 7x5 grid of its own days |
-| Quarterly | 4 | its three months side by side, as grids of dots |
-| Yearly | 1 | all twelve months, one track each, like a year planner |
+**They are four different shapes, not one shape with different contents.** A
+tier you have bought should be recognisable across the room, so the sheet on
+the wall changes size and proportion as well as face:
 
-Every page also carries the line drawing for its first month, the title of
-what it covers, and a strip along the bottom naming the holidays on it.
+| Tier | Page | Shape | The face |
+|---|---|---|---|
+| Daily | 320x320 | a small, thick square block, with the stack it sits on showing beneath | one enormous day number, and which day of 365 it is |
+| Monthly | 340x690 | the classic two squares, tall | a picture square over a real 7x5 grid of the month's own days |
+| Quarterly | 620x400 | a landscape rectangle | its three months laid out side by side, each a real grid |
+| Yearly | 640x560 | a large block rectangle | every day of the year lined up, one track per month |
+
+The daily block is the only one you see the thickness of, because it is the
+only one small enough to. The rest hang as single sheets.
+
+Every page carries the title of what it covers and a strip along the bottom
+naming the holidays on it. The month drawing appears as the big picture square
+on the monthly sheet, as a small header mark on the two wider ones, and not at
+all on the daily block, which has room for the day and nothing else.
+
+**The whole assembly is centred on the wall** — backing strip, tack and sheet
+together — in the space above the point flash. A small block therefore sits at
+eye level rather than stranded under the UI band, and the tall monthly sheet
+still fits. That is what keeps the calendar and the score band in proportion
+whichever tier is on the wall.
 
 **The year is real: 365 days, months at their real lengths, no leap day.**
 Real lengths are what let holidays sit on real dates — the 31st of October has
@@ -166,11 +181,15 @@ eight each time. Read as rips-to-afford at the tier you are on, the three
 upgrades land at roughly 76, 36 and 96 rips: expensive enough to be earned,
 cheap enough that one session reaches the top.
 
-A purchase is gated on the points already being in hand. The buy panel is
-**filled and tappable** when affordable and **outlined with the shortfall
-spelled out** when not, so the gate never looks like a broken button. Buying
-spends the points, swaps the calendar, resets the calendar to New Year, and
-sends the player back to the wall to see what they bought.
+The buy control is a **real `Button`, in the game's one accent colour**. It is
+live and pale blue when the points are in hand, and disabled and grey with the
+shortfall spelled out on it when they are not, so the gate never looks like a
+broken button. Buying spends the points, swaps the calendar, resets it to New
+Year, and sends the player back to the wall to see what they bought.
+
+It is the one control in a view that handles its own contact rather than going
+through the pager — see §7. Once the yearly calendar is on the wall there is
+nothing to sell, and the button is hidden rather than left dead.
 
 ---
 
@@ -182,7 +201,16 @@ Stats to its left, Store to its right.
 **`ViewPager` owns every gameplay contact.** It is the only thing reading the
 press, and it decides what the contact was: a drag past `SWIPE_THRESHOLD`
 sideways is a swipe, and a press that lifts within `TAP_SLOP` is a tap, handed
-on to whichever view is in front. Nothing underneath does its own hit-testing.
+on to whichever view is in front. Nothing underneath does its own hit-testing —
+with one deliberate exception.
+
+**A view may claim a contact for a real control**, by answering
+`swallows_contact`. The store's live buy button is the only thing that does.
+The pager then stands well clear and the button receives the press the ordinary
+way, which is what makes it a real `Button` rather than a drawn panel. The cost
+is that a swipe cannot begin on the button, which is how buttons behave
+everywhere else. A disabled button claims nothing, so the store never becomes a
+dead zone you cannot swipe off.
 
 That single owner is the whole point. A rip and a swipe are the *same* one
 finger, and two independent readers of it would both claim it — a swipe that
@@ -203,9 +231,17 @@ because the pause button lives up there and is a real `Button`.
 **There is no end state.** The game does not end, win, or lose. It persists as
 long as the player keeps ripping. The best point total is saved locally.
 
-**Fully monochrome — no colour anywhere.** Near-black ink, off-white paper, a
-near-white cubicle wall, and a near-black UI band. All imagery, the monthly
-drawings included, is simple line work.
+**Monochrome, with exactly one accent.** Near-black ink, off-white paper, a
+near-white cubicle wall, a near-black UI band — and one pale blue, on the
+store's buy button and nowhere else. It marks the single action in the game
+that spends something, which is the one place worth pulling the eye to.
+
+Every shade lives in `scripts/ui/palette.gd`. `check-constraints.sh` fails any
+colour literal in the project that is neither a near-neutral nor exactly that
+accent, so "one accent" is checked rather than remembered. Adding a second hue
+is a design decision, not a tweak; make it deliberately or not at all.
+
+All imagery, the monthly drawings included, is simple line work.
 
 The presentation should read as **clean and presentable, not sparse or
 unfinished**, despite the deliberately minimal scope. If a change makes it look

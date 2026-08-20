@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/ui/view_pager.gd" id="2_pager"]
@@ -7,6 +7,41 @@
 [ext_resource type="Script" path="res://scripts/ui/store_view.gd" id="5_store"]
 [ext_resource type="Script" path="res://scripts/ui/header_bar.gd" id="6_header"]
 [ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="7_pause"]
+
+; The one accent in the game: pale blue, on the one action that spends
+; something. Pressed and hover keep the same fill and change only the border,
+; so there is exactly one non-grey colour in the whole project.
+[sub_resource type="StyleBoxFlat" id="buy_normal"]
+bg_color = Color(0.647, 0.784, 0.855, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.106, 0.106, 0.106, 1)
+
+[sub_resource type="StyleBoxFlat" id="buy_hover"]
+bg_color = Color(0.647, 0.784, 0.855, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.106, 0.106, 0.106, 1)
+
+[sub_resource type="StyleBoxFlat" id="buy_pressed"]
+bg_color = Color(0.647, 0.784, 0.855, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.106, 0.106, 0.106, 1)
+
+[sub_resource type="StyleBoxFlat" id="buy_disabled"]
+bg_color = Color(0.929, 0.925, 0.914, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.788, 0.784, 0.773, 1)
 
 [node name="GameScreen" type="Control"]
 layout_mode = 3
@@ -67,6 +102,24 @@ offset_right = 2160.0
 offset_bottom = 864.0
 mouse_filter = 2
 script = ExtResource("5_store")
+
+[node name="BuyButton" type="Button" parent="ViewPager/Track/StoreView"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 112.0
+offset_top = 596.0
+offset_right = 608.0
+offset_bottom = 688.0
+theme_override_colors/font_color = Color(0.106, 0.106, 0.106, 1)
+theme_override_colors/font_hover_color = Color(0.106, 0.106, 0.106, 1)
+theme_override_colors/font_pressed_color = Color(0.106, 0.106, 0.106, 1)
+theme_override_colors/font_disabled_color = Color(0.545, 0.541, 0.529, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("buy_normal")
+theme_override_styles/hover = SubResource("buy_hover")
+theme_override_styles/pressed = SubResource("buy_pressed")
+theme_override_styles/disabled = SubResource("buy_disabled")
+text = "BUY IT"
 
 [node name="HeaderBar" type="Control" parent="."]
 unique_name_in_owner = true

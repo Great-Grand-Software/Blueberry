@@ -83,7 +83,7 @@ should be rejected regardless of how good the code is.
 | **Bounded memory** | Browsers cap WebAssembly memory hard. See §4. |
 | **Portrait 3:4, fixed frame** | Viewport is `720x960`. Off-shape screens get the same frame **centred and letterboxed**, never a responsive reflow. That is `stretch/aspect="keep"`, and it is the design, not a placeholder. |
 | **Single point of contact** | One tap or one click. No multi-touch gestures, no keyboard or gamepad requirement. |
-| **Fully monochrome** | No colour anywhere, including new assets. Near-black ink, off-white paper, dark ground. |
+| **Monochrome, one accent** | Near-black ink, off-white paper, near-white wall — and exactly one colour, the pale blue on the store's buy button. Nothing else, including new assets, may be anything but a near-neutral. Every shade lives in `scripts/ui/palette.gd`, and `check-constraints.sh` fails any `Color(...)` literal that is neither neutral nor that accent. A second hue is a design change, not a tweak — see `DESIGN.md` §8. |
 | **No unbounded loops or spawn logic** | Anywhere in gameplay code. See §4. |
 
 ---
@@ -161,9 +161,9 @@ about whether something "looks reasonable".
 - Ceiling: **64 simultaneous nodes** under one gameplay host node. Past that,
   pool and reuse.
 - **Prefer one `_draw()` over many nodes** for repeated visual elements.
-  `CalendarPage` draws its whole face itself — a month grid, three months of
-  dots, or twelve month tracks — rather than a node per cell, so a yearly page
-  costs exactly what a daily one does. `StatsView` and `StoreView` draw their
+  `CalendarPage` draws its whole face itself — a giant day number, a month
+  grid, three of them side by side, or twelve month tracks — rather than a node
+  per cell, so a yearly page costs exactly what a daily one does. `StatsView` and `StoreView` draw their
   rows and panels the same way. Follow this pattern for anything gridded or
   repeated.
 - Every spawned node needs an owner responsible for freeing it. Nodes that
@@ -217,7 +217,9 @@ memory both stay flat. Keep it that way.
 **Input**
 
 - All gameplay input reduces to one point of contact, and **`ViewPager` is the
-  only thing that reads it**. `ViewPager._input` accepts that one contact
+  only thing that reads it**, except where a view claims a contact for a real
+  control of its own through `swallows_contact` — the store's buy button is the
+  one place that happens, and a swipe cannot start on it as a result. `ViewPager._input` accepts that one contact
   pressed, moved and released — `InputEventScreenTouch` and
   `InputEventScreenDrag` at index 0, or `InputEventMouseButton` and
   `InputEventMouseMotion` for the left button — and nothing else. It decides
@@ -301,7 +303,7 @@ the same PR.** An open slot quietly filled is worse than one still open.
 │   ├── game/                    ← calendar_data, holiday_data, calendar_tier,
 │   │                              day_counter, calendar_page, month_image,
 │   │                              calendar_view, game_screen
-│   └── ui/                      ← main_menu, pause_overlay, header_bar,
+│   └── ui/                      ← palette, main_menu, pause_overlay, header_bar,
 │                                  view_pager, stats_view, store_view
 ├── scenes/                      ← main_menu, game, calendar_page
 ├── assets/images/months/        ← twelve SVG line drawings
