@@ -374,8 +374,9 @@ Smaller open questions, same status:
 - **Whether there is any way to reset a run.** Without one, the personal best
   necessarily equals the peak of the current run.
 - **What the pause menu should hold** beyond Resume and Main Menu.
-- **Whether a fifth tier exists above Yearly.** Decade? The cost curve would
-  reach 1536 points, and one rip would be worth 80.
+- **Whether a fifth tier exists above Yearly.** Decade? At the factor of ten
+  in §7 the price would be 80,000 points — ten thousand years of ripping —
+  and one rip would be worth 80.
 
 If you build one of these, **update this file in the same PR** — move it out
 of §10 and describe what you decided. An open slot that has quietly been filled

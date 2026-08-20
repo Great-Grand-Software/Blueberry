@@ -206,6 +206,3 @@ func _draw_backing() -> void:
 	draw_circle(tack + Vector2(2.0, 2.0), TACK_RADIUS, Palette.SHADOW)
 	draw_circle(tack, TACK_RADIUS, Palette.INK)
 	draw_circle(tack - Vector2(3.0, 3.0), TACK_RADIUS * 0.34, Palette.PAPER)
-
-## The note that goes up when a rip collected something. Drawn on the wall
-## rather than spawned as a label, so scoring costs no nodes at all.
