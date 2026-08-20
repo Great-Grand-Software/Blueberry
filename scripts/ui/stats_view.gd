@@ -11,7 +11,7 @@ const TITLE_BASELINE: float = 96.0
 const FIRST_ROW_BASELINE: float = 176.0
 const ROW_HEIGHT: float = 58.0
 const LABEL_SIZE: int = 14
-const VALUE_SIZE: int = 26
+const VALUE_SIZE: int = 27
 
 ## Rows, top to bottom. Filled in by `_row_values` — the shape is fixed here so
 ## the layout cannot be driven by data.
@@ -95,14 +95,14 @@ func _draw() -> void:
 			LABEL_SIZE,
 			Palette.MUTED
 		)
-		draw_string(
+		Lettering.draw_at(
+			self,
 			font,
 			Vector2(MARGIN, baseline + 30.0),
 			values[row],
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1.0,
 			VALUE_SIZE,
-			Palette.INK
+			Palette.INK,
+			Lettering.WEIGHT_BOLD
 		)
 		draw_line(
 			Vector2(MARGIN, baseline + 42.0),

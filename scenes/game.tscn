@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/game/game_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/ui/view_pager.gd" id="2_pager"]
@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://scripts/ui/store_view.gd" id="5_store"]
 [ext_resource type="Script" path="res://scripts/ui/header_bar.gd" id="6_header"]
 [ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="7_pause"]
+[ext_resource type="Script" path="res://scripts/ui/view_arrows.gd" id="8_arrows"]
+[ext_resource type="Script" path="res://scripts/ui/point_flash.gd" id="9_flash"]
 
 ; The one accent in the game: pale blue, on the one action that spends
 ; something. Pressed and hover keep the same fill and change only the border,
@@ -94,6 +96,14 @@ offset_bottom = 840.0
 mouse_filter = 2
 script = ExtResource("4_calendar")
 
+[node name="PointFlash" type="Control" parent="ViewPager/Track/CalendarView"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 720.0
+offset_bottom = 840.0
+mouse_filter = 2
+script = ExtResource("9_flash")
+
 [node name="StoreView" type="Control" parent="ViewPager/Track"]
 unique_name_in_owner = true
 layout_mode = 0
@@ -120,6 +130,14 @@ theme_override_styles/hover = SubResource("buy_hover")
 theme_override_styles/pressed = SubResource("buy_pressed")
 theme_override_styles/disabled = SubResource("buy_disabled")
 text = "BUY IT"
+
+[node name="ViewArrows" type="Control" parent="ViewPager"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 720.0
+offset_bottom = 840.0
+mouse_filter = 2
+script = ExtResource("8_arrows")
 
 [node name="HeaderBar" type="Control" parent="."]
 unique_name_in_owner = true

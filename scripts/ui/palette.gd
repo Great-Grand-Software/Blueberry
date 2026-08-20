@@ -8,7 +8,7 @@ extends RefCounted
 ## project that is neither grey nor exactly `ACCENT`.
 ##
 ## If you need a new shade, add it here and say why. If you need a new *hue*,
-## you are proposing a second accent — see DESIGN.md §8 before you do.
+## you are proposing a second accent — see DESIGN.md §9 before you do.
 
 ## Ink on paper.
 const INK: Color = Color(0.106, 0.106, 0.106)
@@ -28,7 +28,14 @@ const BAND_MUTED: Color = Color(0.549, 0.545, 0.533)
 
 const SHADOW: Color = Color(0, 0, 0, 0.18)
 
-## The one accent: pale blue, and only on the store's buy button. It marks the
-## single action in the game that spends something, which is the one place
-## worth pulling the eye to.
+## The one accent: pale blue. It means **points** — everywhere they come from,
+## everything they cost, and the two buttons that spend them. A holiday on a
+## page, the note that pops up when one is collected, a price in the store,
+## Start and Buy It. Nothing that is not about points may wear it.
+##
+## It is pale by design, which makes it a poor colour for small text on paper:
+## against PAPER it is about 1.6:1, well under readable. Small holiday numbers
+## therefore get a pale blue *cell* with ink on top, while the big display
+## numbers — a day 128px tall, a price at 32 — are set in it directly, where
+## size carries the legibility that contrast does not.
 const ACCENT: Color = Color(0.647, 0.784, 0.855)

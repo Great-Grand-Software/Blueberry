@@ -26,8 +26,12 @@ of the year per rip. They cost **80, 800 and 8,000 points** — which, since a
 year is eight points on every calendar, is ten years, then a hundred, then a
 thousand.
 
-Swipe left and right between the calendar, your progress, and the store. It
-never ends, and it never caps.
+Swipe left and right — or tap the chevrons on the screen edges — between the
+calendar, your progress, and the store. It never ends, and it never caps.
+
+Everything is greyscale except one pale blue, and that blue means **points**:
+the holidays that pay, the note that pops up when you collect one, the prices
+in the store, and the two buttons that spend them.
 
 ## Getting started (any session, any machine)
 

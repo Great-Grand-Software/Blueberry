@@ -37,6 +37,7 @@ var _press_offset: float = 0.0
 var _settle_tween: Tween
 
 @onready var _track: Control = %Track
+@onready var _arrows: ViewArrows = %ViewArrows
 
 
 func _ready() -> void:
@@ -47,6 +48,7 @@ func _ready() -> void:
 			_views.append(child as Control)
 	resized.connect(_layout_views)
 	_layout_views()
+	_arrows.set_view(_view_index, _views.size())
 
 
 ## Which view is showing.
@@ -67,6 +69,7 @@ func go_to(view_index_value: int, animate: bool = true) -> void:
 	var target: int = clampi(view_index_value, 0, _views.size() - 1)
 	var changed: bool = target != _view_index
 	_view_index = target
+	_arrows.set_view(_view_index, _views.size())
 	_settle(animate)
 	if changed:
 		view_changed.emit(_view_index)
@@ -84,6 +87,7 @@ func _layout_views() -> void:
 		# swallow one.
 		view.mouse_filter = MOUSE_FILTER_IGNORE
 	_track.position.x = -_view_index * size.x
+	_arrows.size = size
 
 
 func _input(event: InputEvent) -> void:
@@ -172,6 +176,17 @@ func _release(point: Vector2) -> void:
 		_accept()
 
 
+## The chevron on a side is a tap target as well as a hint, so the swipe is an
+## option rather than the only way through. Returns true if the tap was one.
+func _tapped_an_arrow(point: Vector2) -> bool:
+	var local: Vector2 = point - global_position
+	for direction: int in [-1, 1]:
+		if _arrows.has_view(direction) and _arrows.zone(direction).has_point(local):
+			go_to(_view_index + direction)
+			return true
+	return false
+
+
 ## Commits to the next view along if the drag went far enough, and springs back
 ## to the one it started on if it did not.
 func _settle_to_nearest(travel_x: float) -> void:
@@ -194,6 +209,8 @@ func _view_swallows(point: Vector2) -> bool:
 ## Hands a tap to the view showing, in that view's own coordinates. Views opt
 ## in by defining `handle_tap`; the stats view has nothing to tap and does not.
 func _deliver_tap(point: Vector2) -> void:
+	if _tapped_an_arrow(point):
+		return
 	var view: Control = current_view()
 	if view == null or not view.has_method("handle_tap"):
 		return

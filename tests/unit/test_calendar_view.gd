@@ -115,7 +115,11 @@ func test_each_calendar_is_a_different_shape() -> void:
 			seen.has(face), "%s reuses another tier's shape" % CalendarTier.tier_name(tier)
 		)
 		seen[face] = true
-		assert_lte(face.x, 640.0, "%s must fit the wall" % CalendarTier.tier_name(tier))
+		assert_lte(
+			face.x,
+			720.0 - ViewArrows.ZONE_WIDTH * 2.0,
+			"%s must leave the chevrons a lane" % CalendarTier.tier_name(tier)
+		)
 		assert_lte(
 			face.y + CalendarView.BACKING_HEIGHT,
 			CalendarView.HANGING_REGION,

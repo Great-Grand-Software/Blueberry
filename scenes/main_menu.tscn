@@ -68,7 +68,7 @@ offset_bottom = 192.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.545, 0.541, 0.529, 1)
 theme_override_font_sizes/font_size = 19
-text = "rip the days off, forever"
+text = "tap the calendar to start"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -79,7 +79,6 @@ offset_left = 180.0
 offset_top = 230.0
 offset_right = 540.0
 offset_bottom = 700.0
-mouse_filter = 2
 script = ExtResource("2_calendar")
 
 [node name="StartButton" type="Button" parent="MenuCalendar"]

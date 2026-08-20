@@ -180,6 +180,57 @@ func test_movement_without_a_press_does_nothing() -> void:
 	assert_eq(_pager.view_index(), ViewPager.CALENDAR_VIEW, "hovering is not a swipe")
 
 
+func test_the_edges_carry_a_chevron_you_can_tap() -> void:
+	# Three dots in a corner told a play tester nothing. A chevron on the edge
+	# is the hint, and tapping it moves as well, so the swipe is an option
+	# rather than the only way through.
+	var arrows: ViewArrows = _screen.get_node("%ViewArrows")
+	var right: Vector2 = arrows.zone(1).get_center() + _pager.global_position
+	_press(right)
+	_release(right)
+	await wait_seconds(SETTLE_SECONDS)
+	assert_eq(_pager.view_index(), ViewPager.STORE_VIEW, "tapped through to the store")
+
+	var left: Vector2 = arrows.zone(-1).get_center() + _pager.global_position
+	_press(left)
+	_release(left)
+	await wait_seconds(SETTLE_SECONDS)
+	assert_eq(_pager.view_index(), ViewPager.CALENDAR_VIEW, "and back again")
+
+
+func test_the_end_of_the_row_has_no_chevron_pointing_off_it() -> void:
+	var arrows: ViewArrows = _screen.get_node("%ViewArrows")
+	assert_true(arrows.has_view(-1), "the calendar has the stats to its left")
+	assert_true(arrows.has_view(1), "and the store to its right")
+
+	_pager.go_to(ViewPager.STATS_VIEW)
+	await wait_seconds(SETTLE_SECONDS)
+	assert_false(arrows.has_view(-1), "nothing left of the stats")
+	assert_true(arrows.has_view(1))
+
+	_pager.go_to(ViewPager.STORE_VIEW)
+	await wait_seconds(SETTLE_SECONDS)
+	assert_false(arrows.has_view(1), "nothing right of the store")
+
+
+func test_a_chevron_can_never_steal_a_tap_meant_for_the_calendar() -> void:
+	# The guardrail that keeps the two from fighting: every calendar is sized
+	# to stop short of both tap zones, so a rip and a page change can never
+	# both claim the same point. It is checked here rather than trusted,
+	# because it is a relationship between two constants in different files.
+	var arrows: ViewArrows = _screen.get_node("%ViewArrows")
+	var view: CalendarView = _screen.get_node("%CalendarView")
+	for tier: int in CalendarTier.TIER_COUNT:
+		GameState.tier_index = tier
+		view.rebuild()
+		await wait_process_frames(1)
+
+		var page: Rect2 = view.page_rect()
+		var label: String = CalendarTier.tier_name(tier)
+		assert_false(arrows.zone(-1).intersects(page), "%s must clear the left chevron" % label)
+		assert_false(arrows.zone(1).intersects(page), "%s must clear the right chevron" % label)
+
+
 func test_a_tap_on_the_stats_view_does_nothing_at_all() -> void:
 	_pager.go_to(ViewPager.STATS_VIEW)
 	await wait_seconds(SETTLE_SECONDS)

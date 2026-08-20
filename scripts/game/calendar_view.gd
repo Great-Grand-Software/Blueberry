@@ -48,25 +48,13 @@ const SHADOW_OFFSET: Vector2 = Vector2(5.0, 5.0)
 
 ## How far a ripped page falls before it is gone.
 const FALL_DISTANCE: float = 900.0
-## The "+1 HALLOWEEN" note after a scoring rip. It is drawn as a badge on its
-## own paper, because a yearly page reaches far enough down the wall that a
-## bare line of text would land on top of it.
-const FLASH_DURATION: float = 1.1
-const FLASH_RISE: float = 36.0
-## How far below the sheet the note starts. It follows the calendar rather than
-## sitting at a fixed height, so it lands just under whichever shape is hanging
-## instead of stranded at the bottom of the wall on the small ones.
-const FLASH_DROP: float = 76.0
-const FLASH_FLOOR: float = 812.0
-const FLASH_PADDING: Vector2 = Vector2(18.0, 12.0)
 
 ## Index 0 is the page being ripped; index 1 is the one underneath it.
 var _pages: Array[CalendarPage] = []
 ## Pages already torn off, oldest first.
 var _falling: Array[CalendarPage] = []
-var _flash_text: String = ""
-var _flash_progress: float = 1.0
-var _flash_tween: Tween
+
+@onready var _flash: PointFlash = %PointFlash
 
 
 func _ready() -> void:
@@ -80,7 +68,7 @@ func rebuild() -> void:
 		if is_instance_valid(page):
 			page.queue_free()
 	_pages.clear()
-	_flash_text = ""
+	_flash.clear()
 
 	_add_page(GameState.elapsed_days)
 	_add_page(GameState.elapsed_days + GameState.current_span_days())
@@ -132,8 +120,7 @@ func rip() -> void:
 	_add_page(GameState.elapsed_days + GameState.current_span_days())
 	_restack()
 
-	if not collected.is_empty():
-		_start_flash(collected)
+	_flash.show_points(collected, page_rect().position.y)
 	page_ripped.emit(collected)
 
 
@@ -184,20 +171,9 @@ func _restack() -> void:
 	for sheet: CalendarPage in _falling:
 		if is_instance_valid(sheet):
 			move_child(sheet, get_child_count() - 1)
-
-
-func _start_flash(names: PackedStringArray) -> void:
-	_flash_text = "+%d   %s" % [names.size(), ", ".join(names).to_upper()]
-	if _flash_tween != null and _flash_tween.is_valid():
-		_flash_tween.kill()
-	# A finite tween, redrawing only while the note is up.
-	_flash_tween = create_tween()
-	_flash_tween.tween_method(_set_flash_progress, 0.0, 1.0, FLASH_DURATION)
-
-
-func _set_flash_progress(progress: float) -> void:
-	_flash_progress = progress
-	queue_redraw()
+	# Last of all: the note has to clear every sheet on the wall, including
+	# the ones on their way down.
+	move_child(_flash, get_child_count() - 1)
 
 
 func _draw() -> void:
@@ -207,7 +183,6 @@ func _draw() -> void:
 	# Behind the pages, which are children and so draw after this. Only the
 	# offset edges show, which is what gives the calendar its bit of depth.
 	draw_rect(Rect2(page.position + SHADOW_OFFSET, page.size), Palette.SHADOW, true)
-	_draw_flash()
 
 
 func _draw_wall() -> void:
@@ -232,29 +207,5 @@ func _draw_backing() -> void:
 	draw_circle(tack, TACK_RADIUS, Palette.INK)
 	draw_circle(tack - Vector2(3.0, 3.0), TACK_RADIUS * 0.34, Palette.PAPER)
 
-
 ## The note that goes up when a rip collected something. Drawn on the wall
 ## rather than spawned as a label, so scoring costs no nodes at all.
-func _draw_flash() -> void:
-	if _flash_text == "" or _flash_progress >= 1.0:
-		return
-	var font: Font = ThemeDB.fallback_font
-	var alpha: float = 1.0 - pow(_flash_progress, 3.0)
-	var anchor: float = minf(page_rect().end.y + FLASH_DROP, FLASH_FLOOR)
-	var baseline: float = anchor - FLASH_RISE * _flash_progress
-	var width: float = font.get_string_size(_flash_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 20).x
-	var badge := Rect2(
-		Vector2((size.x - width) * 0.5 - FLASH_PADDING.x, baseline - 22.0 - FLASH_PADDING.y),
-		Vector2(width + FLASH_PADDING.x * 2.0, 28.0 + FLASH_PADDING.y * 2.0)
-	)
-	draw_rect(badge, Color(Palette.PAPER, alpha), true)
-	draw_rect(badge, Color(Palette.INK, alpha), false, 2.0)
-	draw_string(
-		font,
-		Vector2((size.x - width) * 0.5, baseline),
-		_flash_text,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1.0,
-		20,
-		Color(Palette.INK, alpha)
-	)

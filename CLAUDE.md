@@ -83,7 +83,7 @@ should be rejected regardless of how good the code is.
 | **Bounded memory** | Browsers cap WebAssembly memory hard. See §4. |
 | **Portrait 3:4, fixed frame** | Viewport is `720x960`. Off-shape screens get the same frame **centred and letterboxed**, never a responsive reflow. That is `stretch/aspect="keep"`, and it is the design, not a placeholder. |
 | **Single point of contact** | One tap or one click. No multi-touch gestures, no keyboard or gamepad requirement. |
-| **Monochrome, one accent** | Near-black ink, off-white paper, near-white wall — and exactly one colour, a pale blue, used only on the primary action of a screen — Start on the menu, Buy It in the store. Nothing else, including new assets, may be anything but a near-neutral. Every shade lives in `scripts/ui/palette.gd`, and `check-constraints.sh` fails any `Color(...)` literal that is neither neutral nor that accent. A second hue is a design change, not a tweak — see `DESIGN.md` §9. |
+| **Monochrome, one accent** | Near-black ink, off-white paper, near-white wall — and one pale blue, which means **points**: holidays, the note when one is collected, prices, and the two buttons that spend them. Nothing that is not about points wears it; nothing else, new assets included, is anything but a near-neutral. Every shade lives in `scripts/ui/palette.gd`, and `check-constraints.sh` fails any `Color(...)` literal that is neither neutral nor that accent. A second hue is a design change, not a tweak — see `DESIGN.md` §9. |
 | **No unbounded loops or spawn logic** | Anywhere in gameplay code. See §4. |
 
 ---
@@ -219,7 +219,9 @@ memory both stay flat. Keep it that way.
 - All gameplay input reduces to one point of contact, and **`ViewPager` is the
   only thing that reads it**, except where a view claims a contact for a real
   control of its own through `swallows_contact` — the store's buy button is the
-  one place that happens, and a swipe cannot start on it as a result. `ViewPager._input` accepts that one contact
+  one place that happens, and a swipe cannot start on it as a result. The edge
+  chevrons are tap targets too, but `ViewPager` hit-tests those itself, so it
+  is still the single reader of the finger. `ViewPager._input` accepts that one contact
   pressed, moved and released — `InputEventScreenTouch` and
   `InputEventScreenDrag` at index 0, or `InputEventMouseButton` and
   `InputEventMouseMotion` for the left button — and nothing else. It decides
@@ -249,7 +251,8 @@ godot --headless --path . --export-release "Web" build/web/index.html
   across sixty rips and that ripping faster than the fall cannot pile sheets
   up; `test_calendar_tier.gd` asserts a year of rips lands exactly on New Year
   on all four tiers; `test_view_pager.gd` asserts a swipe never also rips the
-  page under it. Those are the tests that matter most here.
+  page under it, and that no calendar ever overlaps an edge chevron's tap zone.
+  Those are the tests that matter most here.
 - Pure logic (`CalendarData`, `HolidayData`, `CalendarTier`, `DayCounter`) must
   stay testable without instantiating a scene. Keep it that way.
 
@@ -303,9 +306,9 @@ the same PR.** An open slot quietly filled is worse than one still open.
 │   ├── game/                    ← calendar_data, holiday_data, calendar_tier,
 │   │                              day_counter, calendar_page, month_image,
 │   │                              calendar_view, game_screen
-│   └── ui/                      ← palette, main_menu, menu_calendar,
+│   └── ui/                      ← palette, lettering, main_menu, menu_calendar,
 │                                  pause_overlay, header_bar, view_pager,
-│                                  stats_view, store_view
+│                                  view_arrows, stats_view, store_view
 ├── scenes/                      ← main_menu, game, calendar_page
 ├── assets/images/months/        ← twelve SVG line drawings
 ├── tests/unit/                  ← GUT suite

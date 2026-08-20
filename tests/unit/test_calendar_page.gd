@@ -93,6 +93,16 @@ func test_a_page_takes_the_shape_of_its_own_calendar() -> void:
 		)
 
 
+func test_a_scoring_page_is_marked_in_the_points_colour() -> void:
+	# Pale blue means points everywhere in the game, so the days that give
+	# them wear it. This asserts the page knows which days those are; the
+	# drawing itself is checked by eye in the preview build.
+	_page.configure(CalendarTier.DAILY, 0)
+	assert_true(HolidayData.is_holiday(_page.year_day()), "1 January scores")
+	_page.configure(CalendarTier.DAILY, 1)
+	assert_false(HolidayData.is_holiday(_page.year_day()), "2 January does not")
+
+
 func test_ripping_is_idempotent_and_frees_the_page() -> void:
 	_page.configure(CalendarTier.DAILY, 0)
 	assert_false(_page.is_ripping())

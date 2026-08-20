@@ -8,9 +8,17 @@ extends Control
 ## the player does is press a calendar, which is the only thing they will ever
 ## do, so the menu teaches the gesture instead of describing it.
 ##
+## **The whole calendar is the button.** A play tester tapped the sheet rather
+## than the Start printed on it and nothing happened, which is the menu failing
+## at the one job it has. Pressing anywhere on the calendar now starts the
+## game; the Start panel stays because it is what makes the sheet read as
+## pressable in the first place.
+##
 ## Drawn rather than loaded as an image: it costs no bytes, it matches the wall
 ## in-game exactly because it uses the same palette, and it stays crisp at any
 ## size the frame is letterboxed to.
+
+signal pressed
 
 ## The backing strip the tack goes through, in local coordinates.
 const BACKING_RECT: Rect2 = Rect2(10.0, 0.0, 340.0, 40.0)
@@ -32,6 +40,26 @@ const SHADOW_OFFSET: Vector2 = Vector2(5.0, 5.0)
 
 ## Where the caption under the Start button sits.
 const HINT_BASELINE: float = 412.0
+const HINT_TEXT: String = "tap anywhere on the calendar to start"
+
+
+func _gui_input(event: InputEvent) -> void:
+	# One point of contact, same discipline as the game: finger zero or the
+	# left mouse button, and only on release, so a press that slides off the
+	# calendar does not start anything.
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.index == 0 and not touch.pressed:
+			_press()
+	elif event is InputEventMouseButton:
+		var click := event as InputEventMouseButton
+		if click.button_index == MOUSE_BUTTON_LEFT and not click.pressed:
+			_press()
+
+
+func _press() -> void:
+	accept_event()
+	pressed.emit()
 
 
 func _draw() -> void:
@@ -100,14 +128,6 @@ func _draw_blank_grid() -> void:
 
 func _draw_hint() -> void:
 	var font: Font = ThemeDB.fallback_font
-	var hint: String = "tap the calendar to rip a page off"
-	var width: float = font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15).x
-	draw_string(
-		font,
-		Vector2((size.x - width) * 0.5, HINT_BASELINE),
-		hint,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1.0,
-		15,
-		Palette.MUTED
+	Lettering.draw_centred(
+		self, font, 0.0, size.x, HINT_BASELINE, HINT_TEXT, 16, Palette.MUTED, Lettering.WEIGHT_BOLD
 	)

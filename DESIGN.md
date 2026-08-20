@@ -68,6 +68,11 @@ its page reads, and the personal best — plus the pause button and three dots
 showing which view is in front. The band never scrolls, so the score is
 readable from every view.
 
+The fallback font ships one weight, so "bolder" is faked: `Lettering` draws an
+outline in the text's own colour before the glyph, which thickens every stroke.
+It is used on the numbers the player is actually reading — the score, the year,
+a price, a stats value — and left off body text, where it only looks muddy.
+
 Big counts are grouped in threes (`8,000`, not `8000`). A five-figure score in
 an unbroken run of digits is the thing that makes a big number unreadable, and
 this game produces five-figure numbers routinely.
@@ -92,13 +97,19 @@ page past that and the flash badge starts landing on it.
 ## 3. The main menu
 
 One blank calendar on the same cubicle wall the game uses — tack, backing
-strip, torn top edge, empty ruled grid — with **BLUEBERRY CALENDAR** above it
-and **Start printed on the sheet itself**.
+strip, torn top edge, empty ruled grid — with **BLUEBERRY CALENDAR** above it,
+**tap the calendar to start** under that, and a **Start panel printed on the
+sheet itself**.
 
 That placement is the teaching. Pressing a calendar is the entire game, so the
-first thing the player does is the only thing they will ever do. A caption
-under the button says it in words as well, and the line below the calendar
-reports what the saved run has reached — its points, its year, its best.
+first thing the player does is the only thing they will ever do.
+
+**The whole calendar is the button**, not just the panel. A play tester tapped
+the sheet rather than the Start printed on it, and nothing happened — the menu
+failing at the one job it has. Pressing anywhere on the calendar now starts the
+game; the Start panel stays because it is what makes the sheet read as
+pressable in the first place. The line below reports what the saved run has
+reached: its points, its year, its best.
 
 It is drawn rather than loaded as an image: no bytes to justify, the same
 palette as the wall in-game, and crisp at whatever size the frame is
@@ -174,6 +185,13 @@ four tiers: a year of rips lands on New Year again, exactly.
 **Points come from holidays and from nothing else.** Most rips award nothing,
 which is what makes a page with a holiday on it feel like something.
 
+**Every holiday is marked in the accent**, on every calendar face, so the
+player learns what pays before they have to be told. When one is collected, a
+pale blue badge pops up at the **top** of the sheet and floats away. It is at
+the top deliberately: the hand that just tapped is over the middle and lower
+half of the calendar, so a note below the page sits behind the player's own
+fingers at exactly the moment they need to see why they scored.
+
 **The year is the other half of the score.** The calendar opens on **1 January
 2026** and the year climbs with every rip, forever — a long run really does
 reach 4027 and beyond. It is printed on every page, shown large in the score
@@ -245,6 +263,22 @@ resets on a purchase is a punishment for upgrading.
 Swipe left or right between the three views. The calendar is in the middle,
 Stats to its left, Store to its right.
 
+**A chevron sits on each edge of the screen**, `<` and `>`, and it is a tap
+target as well as a hint. Three dots in the corner turned out to be no signal
+at all — a play tester never found the other two views — so the affordance is
+now where the gesture happens, and tapping it moves too, so the swipe is an
+option rather than the only way through. The chevron pointing off the end of
+the row is not drawn, because there is nothing that way.
+
+The chevrons are deliberately **not** in the accent colour. Pale blue means
+points; navigation is not points, and colouring it would dilute the one signal
+the game has.
+
+**The wide calendars are sized to stop short of the tap zones** — that is why
+the quarterly sheet is 580 wide and the yearly 596 rather than filling the
+frame. A chevron can therefore never steal a tap meant for the calendar, and
+`test_view_pager.gd` asserts it for all four tiers rather than trusting it.
+
 **`ViewPager` owns every gameplay contact.** It is the only thing reading the
 press, and it decides what the contact was: a drag past `SWIPE_THRESHOLD`
 sideways is a swipe, and a press that lifts within `TAP_SLOP` is a tap, handed
@@ -281,9 +315,22 @@ long as the player keeps ripping. The best point total is saved locally.
 **Monochrome, with exactly one accent.** Near-black ink, off-white paper, a
 near-white cubicle wall, a near-black score band — and one pale blue.
 
-The accent marks **the primary action of a screen, and nothing else**: Start on
-the menu, Buy It in the store. Those are the only two controls in the game that
-commit the player to something. Anything else wearing it would make it noise.
+**Pale blue means points.** Everywhere they come from, everything they cost,
+and the two buttons that spend them:
+
+- a **holiday** on any calendar face — the one thing that scores
+- the **note that pops up** when one is collected
+- the **price** in the store
+- **Start** on the menu and **Buy It** in the store
+
+Nothing that is not about points may wear it. The chevrons do not; the tack
+does not; the wall does not. One meaning, or it stops meaning anything.
+
+The colour is pale by design, which makes it a poor ink for small text: against
+paper it is about 1.6:1, well under readable. So the rule bends by size, not by
+hue — a holiday in a month grid gets a pale blue **cell** with the number in
+ink on top, while a day number 122px tall and a price at 34 are set in the
+accent **directly**, where size carries the legibility that contrast does not.
 
 Every shade lives in `scripts/ui/palette.gd`. `check-constraints.sh` fails any
 colour literal in the project that is neither a near-neutral nor exactly that

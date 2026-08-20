@@ -106,12 +106,16 @@ func _draw_offer(font: Font) -> void:
 	_draw_card(CARD_RECT)
 
 	_centred(font, "NEXT CALENDAR", CARD_RECT.position.y + 44.0, 14, Palette.MUTED)
-	_centred(
+	Lettering.draw_centred(
+		self,
 		font,
-		CalendarTier.tier_name(next_tier).to_upper(),
+		0.0,
+		size.x,
 		CARD_RECT.position.y + 96.0,
+		CalendarTier.tier_name(next_tier).to_upper(),
 		40,
-		Palette.INK
+		Palette.INK,
+		Lettering.WEIGHT_BOLD
 	)
 	_centred(
 		font,
@@ -147,12 +151,27 @@ func _draw_offer(font: Font) -> void:
 		Palette.MUTED
 	)
 	_centred(font, "COST", CARD_RECT.position.y + 278.0, 14, Palette.MUTED)
-	_centred(
-		font,
-		"%s POINTS" % DayCounter.with_separators(GameState.next_tier_cost()),
-		CARD_RECT.position.y + 324.0,
-		32,
-		Palette.INK
+	# The price is points, so it wears the points colour. At 34 with weight
+	# behind it the accent carries on paper, which it would not at body size.
+	(
+		Lettering
+		. draw_centred(
+			self,
+			font,
+			0.0,
+			size.x,
+			CARD_RECT.position.y + 326.0,
+			(
+				"%s POINT%s"
+				% [
+					DayCounter.with_separators(GameState.next_tier_cost()),
+					"" if GameState.next_tier_cost() == 1 else "S",
+				]
+			),
+			34,
+			Palette.ACCENT,
+			Lettering.WEIGHT_HEAVY
+		)
 	)
 
 
@@ -166,15 +185,19 @@ func _years_to_afford() -> int:
 ## The running total, repeated where the price is, so the gate and the balance
 ## it is checked against read in one glance.
 func _draw_balance(font: Font, baseline: float) -> void:
-	_centred(
+	Lettering.draw_centred(
+		self,
 		font,
+		0.0,
+		size.x,
+		baseline,
 		(
 			"YOU HAVE %s POINT%s"
 			% [DayCounter.with_separators(GameState.points), "" if GameState.points == 1 else "S"]
 		),
-		baseline,
-		18,
-		Palette.MUTED
+		19,
+		Palette.MUTED,
+		Lettering.WEIGHT_BOLD
 	)
 
 

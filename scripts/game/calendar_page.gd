@@ -23,8 +23,8 @@ signal rip_finished(page: CalendarPage)
 const PAGE_SIZES: Array[Vector2] = [
 	Vector2(320.0, 320.0),
 	Vector2(340.0, 660.0),
-	Vector2(620.0, 400.0),
-	Vector2(640.0, 560.0),
+	Vector2(580.0, 400.0),
+	Vector2(596.0, 560.0),
 ]
 
 ## Depth of the torn top edge left behind when the page above came off.
@@ -226,9 +226,22 @@ func _draw_torn_edge(face: Vector2) -> void:
 func _draw_daily_face(face: Vector2) -> void:
 	var font: Font = ThemeDB.fallback_font
 	var month: int = CalendarData.month_of_year_day(year_day())
+	var scoring: bool = HolidayData.is_holiday(year_day())
 	_centred(font, CalendarData.month_name(month).to_upper(), 52.0, 20, Palette.INK, 0.0, face.x)
 	_centred(font, _year_text(), 72.0, 15, Palette.MUTED, 0.0, face.x)
-	_centred(font, str(CalendarData.day_of_month(year_day())), 208.0, 122, Palette.INK, 0.0, face.x)
+	# At 122px the accent carries on its own, so a scoring day is set in it
+	# outright rather than needing a cell behind it.
+	Lettering.draw_centred(
+		self,
+		font,
+		0.0,
+		face.x,
+		208.0,
+		str(CalendarData.day_of_month(year_day())),
+		122,
+		Palette.ACCENT if scoring else Palette.INK,
+		Lettering.WEIGHT_HEAVY if scoring else 0
+	)
 	_centred(
 		font,
 		"DAY %d OF %d" % [year_day() + 1, CalendarData.DAYS_PER_YEAR],
@@ -316,6 +329,15 @@ func _draw_month_grid(rect: Rect2, month_index: int, font_size: int) -> void:
 	var days: int = CalendarData.days_in_month(month_index)
 	var month_start: int = CalendarData.month_start_day(month_index)
 
+	# Holiday cells go down first, so the rules draw over them and the grid
+	# stays a grid. The whole cell is filled rather than the digits coloured:
+	# pale blue on paper is about 1.6:1, which a number this small cannot
+	# survive. The day still reads as blue; the number on it stays ink.
+	for day: int in range(1, days + 1):
+		if not HolidayData.is_holiday(month_start + day - 1):
+			continue
+		draw_rect(Rect2(_cell_origin(rect, cell, day), cell), Palette.ACCENT, true)
+
 	for column: int in range(1, MONTH_COLUMNS):
 		var x: float = rect.position.x + column * cell.x
 		draw_line(Vector2(x, rect.position.y), Vector2(x, rect.end.y), Palette.RULE, RULE_WIDTH)
@@ -325,23 +347,24 @@ func _draw_month_grid(rect: Rect2, month_index: int, font_size: int) -> void:
 	draw_rect(rect, Palette.MUTED, false, RULE_WIDTH)
 
 	for day: int in range(1, days + 1):
-		var index: int = day - 1
-		var origin: Vector2 = (
-			rect.position
-			+ Vector2((index % MONTH_COLUMNS) * cell.x, (index / MONTH_COLUMNS) * cell.y)
-		)
-		var is_holiday: bool = HolidayData.is_holiday(month_start + index)
-		if is_holiday:
-			draw_circle(origin + cell - Vector2(cell.x * 0.22, cell.y * 0.24), 4.0, Palette.INK)
-		draw_string(
+		var is_holiday: bool = HolidayData.is_holiday(month_start + day - 1)
+		Lettering.draw_at(
+			self,
 			font,
-			origin + Vector2(5.0, font_size + 4.0),
+			_cell_origin(rect, cell, day) + Vector2(5.0, font_size + 4.0),
 			str(day),
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1.0,
 			font_size,
-			Palette.INK if is_holiday else Palette.MUTED
+			Palette.INK if is_holiday else Palette.MUTED,
+			Lettering.WEIGHT_BOLD if is_holiday else 0
 		)
+
+
+## Top-left corner of the cell holding `day` (1-based) in a month grid.
+func _cell_origin(rect: Rect2, cell: Vector2, day: int) -> Vector2:
+	var index: int = day - 1
+	return (
+		rect.position + Vector2((index % MONTH_COLUMNS) * cell.x, (index / MONTH_COLUMNS) * cell.y)
+	)
 
 
 ## One month as a row of day ticks, with its holidays picked out. Bounded by
@@ -353,7 +376,10 @@ func _draw_month_track(origin: Vector2, track_width: float, month_index: int) ->
 	for day: int in days:
 		var x: float = origin.x + (day + 0.5) * step
 		if HolidayData.is_holiday(month_start + day):
-			draw_circle(Vector2(x, origin.y), 4.5, Palette.INK)
+			# Ringed in ink, because a pale blue dot alone would vanish against
+			# the paper at this size.
+			draw_circle(Vector2(x, origin.y), 5.0, Palette.ACCENT)
+			draw_circle(Vector2(x, origin.y), 5.0, Palette.INK, false, 1.0)
 		else:
 			draw_line(
 				Vector2(x, origin.y - YEAR_TICK_HEIGHT * 0.5),
@@ -387,14 +413,16 @@ func _draw_holiday_strip(font: Font, rect: Rect2) -> void:
 	if font.get_string_size(listed, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13).x > rect.size.x:
 		listed = "%d HOLIDAYS ON THIS PAGE" % names.size()
 	_centred(font, listed, rect.position.y + 24.0, 13, Palette.INK, rect.position.x, rect.size.x)
-	_centred(
+	Lettering.draw_centred(
+		self,
 		font,
-		"+%d POINT%s" % [names.size(), "" if names.size() == 1 else "S"],
-		rect.position.y + 44.0,
-		13,
-		Palette.MUTED,
 		rect.position.x,
-		rect.size.x
+		rect.size.x,
+		rect.position.y + 46.0,
+		"+%d POINT%s" % [names.size(), "" if names.size() == 1 else "S"],
+		15,
+		Palette.INK,
+		Lettering.WEIGHT_BOLD
 	)
 
 
