@@ -1,59 +1,86 @@
 class_name DayCounter
 extends RefCounted
-## Converts a raw count of days into every larger unit at once.
+## Turns the running count of days ripped away into the date on the wall, and
+## formats the numbers the readouts print.
 ##
-## The score is one number — days tapped — but it is shown decomposed across
-## six units simultaneously, each padded with leading zeros, so the display
-## reads like an odometer that will clearly never fill. There is no cap.
+## The calendar opens on the 1st of January 2026 and never stops, so the count
+## is unbounded and the year is simply however many whole 365-day years have
+## gone by on top of it. Nothing here caps or rounds:
+## `recombine(decompose(n)) == n` for every n, which `test_day_counter.gd`
+## asserts.
 ##
-## The ladder is exact by construction: 30 days to a month, 12 months to a
-## year, then powers of ten. Nothing here rounds or approximates.
-
-const DAYS_PER_MONTH: int = CalendarData.DAYS_PER_MONTH
-const MONTHS_PER_YEAR: int = CalendarData.MONTH_COUNT
-const DAYS_PER_YEAR: int = DAYS_PER_MONTH * MONTHS_PER_YEAR
-const DAYS_PER_DECADE: int = DAYS_PER_YEAR * 10
-const DAYS_PER_CENTURY: int = DAYS_PER_DECADE * 10
-const DAYS_PER_MILLENNIUM: int = DAYS_PER_CENTURY * 10
-
-## Unit key, short label, days per unit, and how many digits to pad to.
-## Ordered largest first, which is the order they are displayed in.
-const UNITS: Array[Dictionary] = [
-	{"key": "millennia", "label": "MIL", "size": DAYS_PER_MILLENNIUM, "pad": 3},
-	{"key": "centuries", "label": "CEN", "size": DAYS_PER_CENTURY, "pad": 1},
-	{"key": "decades", "label": "DEC", "size": DAYS_PER_DECADE, "pad": 1},
-	{"key": "years", "label": "YRS", "size": DAYS_PER_YEAR, "pad": 1},
-	{"key": "months", "label": "MON", "size": DAYS_PER_MONTH, "pad": 2},
-	{"key": "days", "label": "DAY", "size": 1, "pad": 2},
-]
+## This is where display formatting lives, because the date is the thing most
+## of it is for. `with_separators` is here rather than in a class of its own so
+## the header, the stats view and the store all group their digits the same way.
 
 
-## Splits `total_days` across every unit, largest first. Each unit holds only
-## its own remainder, so the six values recombine exactly into the input.
-## Negative input is clamped to zero; the counter never runs backwards.
-static func decompose(total_days: int) -> Dictionary:
-	var remaining: int = maxi(total_days, 0)
-	var result: Dictionary = {}
-	for unit: Dictionary in UNITS:
-		var size: int = unit["size"]
-		result[unit["key"]] = remaining / size
-		remaining %= size
-	return result
+## Splits elapsed days into the date they land on: how many whole years have
+## passed, which month, and which day of that month. Negative input is clamped
+## to zero — the calendar never runs backwards.
+static func decompose(elapsed_days: int) -> Dictionary:
+	var total: int = maxi(elapsed_days, 0)
+	var years: int = total / CalendarData.DAYS_PER_YEAR
+	var year_day: int = total % CalendarData.DAYS_PER_YEAR
+	return {
+		"years": years,
+		"year_day": year_day,
+		"month_index": CalendarData.month_of_year_day(year_day),
+		"day_of_month": CalendarData.day_of_month(year_day),
+	}
 
 
-## The value of one unit, zero-padded to its display width. The largest unit
-## is never truncated — it simply grows past its padding.
-static func format_unit(total_days: int, unit_key: String) -> String:
-	var parts: Dictionary = decompose(total_days)
-	for unit: Dictionary in UNITS:
-		if unit["key"] == unit_key:
-			return str(parts[unit_key]).pad_zeros(unit["pad"])
-	return ""
+## The inverse of `decompose`. Kept so the round trip can be asserted rather
+## than assumed.
+static func recombine(parts: Dictionary) -> int:
+	return int(parts["years"]) * CalendarData.DAYS_PER_YEAR + int(parts["year_day"])
 
 
-## The whole odometer as one line, e.g. "000 0 0 0 00 07".
-static func format_all(total_days: int) -> String:
-	var parts: PackedStringArray = []
-	for unit: Dictionary in UNITS:
-		parts.append(format_unit(total_days, unit["key"]))
-	return " ".join(parts)
+## The year printed on the calendar. Starts at CalendarData.START_YEAR and has
+## no ceiling — a long run really does reach the year 6782.
+static func year_of(elapsed_days: int) -> int:
+	return maxi(elapsed_days, 0) / CalendarData.DAYS_PER_YEAR + CalendarData.START_YEAR
+
+
+## Day-of-year (0-based) the calendar is currently open on.
+static func year_day_of(elapsed_days: int) -> int:
+	return maxi(elapsed_days, 0) % CalendarData.DAYS_PER_YEAR
+
+
+## Elapsed days at the 1st of January following `elapsed_days`. A day already
+## on New Year stays where it is. This is where a purchase moves the calendar
+## to: a fresh sheet starting on a real boundary, without giving back the years
+## already ripped.
+static func next_new_year(elapsed_days: int) -> int:
+	var total: int = maxi(elapsed_days, 0)
+	var into_the_year: int = year_day_of(total)
+	if into_the_year == 0:
+		return total
+	return total + CalendarData.DAYS_PER_YEAR - into_the_year
+
+
+## The date as one short line, e.g. "17 MAR 2029".
+static func format_date(elapsed_days: int) -> String:
+	var parts: Dictionary = decompose(elapsed_days)
+	return (
+		"%d %s %d"
+		% [
+			int(parts["day_of_month"]),
+			CalendarData.month_abbreviation(int(parts["month_index"])),
+			year_of(elapsed_days),
+		]
+	)
+
+
+## Groups a count in threes, e.g. 8000 -> "8,000". Points and rip counts run to
+## five figures on a long game, and an ungrouped run of digits is the thing that
+## makes a big score unreadable. Bounded by the digits in the number.
+static func with_separators(value: int) -> String:
+	var digits: String = str(absi(value))
+	var grouped: String = ""
+	var placed: int = 0
+	for index: int in range(digits.length() - 1, -1, -1):
+		grouped = digits[index] + grouped
+		placed += 1
+		if placed % 3 == 0 and index > 0:
+			grouped = "," + grouped
+	return "-" + grouped if value < 0 else grouped

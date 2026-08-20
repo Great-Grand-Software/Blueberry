@@ -1,6 +1,6 @@
 # blueberry
 
-A monochrome portrait game about crossing days off a calendar, forever.
+A monochrome portrait game about ripping pages off a calendar, forever.
 
 Built and reviewed entirely through Claude Code cloud sessions — no local
 development machine anywhere in this workflow.
@@ -8,15 +8,30 @@ development machine anywhere in this workflow.
 **This is an experimental proof of concept, not a polished game.** The core
 loop is deliberately minimal: it exists to be extended by contributors through
 pull requests. Parts of it are intentionally left undesigned — read
-[`DESIGN.md`](DESIGN.md) §7 before assuming something is missing by accident.
+[`DESIGN.md`](DESIGN.md) §10 before assuming something is missing by accident.
 
 ## The loop
 
-Tap a day in the calendar grid to cross it off with an X. Thirty taps finish
-the month; the page folds down, revealing the next month and its line drawing.
-Your score is every day you have ever tapped, shown across six units at once —
-days, months, years, decades, centuries, millennia. It never ends, and it never
-caps.
+A calendar hangs off a single thumbtack on a plain cubicle wall. Tap it and
+the page tears loose, tumbles away, and the next one is already underneath.
+
+Points come from **holidays and nothing else** — eight in a year, so most rips
+are worth nothing at all. The year on the wall starts at **2026** and climbs
+forever; a long run really does reach 4027.
+
+Spend the points in the store on a coarser calendar: **Daily** (365 rips a
+year) becomes **Monthly** (12), then **Quarterly** (4), then **Yearly** (1).
+Each is a differently shaped object with a different face, and each covers more
+of the year per rip. They cost **80, 800 and 8,000 points** — which, since a
+year is eight points on every calendar, is ten years, then a hundred, then a
+thousand.
+
+Swipe left and right — or tap the chevrons on the screen edges — between the
+calendar, your progress, and the store. It never ends, and it never caps.
+
+Everything is greyscale except one pale blue, and that blue means **points**:
+the holidays that pay, the note that pops up when you collect one, the prices
+in the store, and the two buttons that spend them.
 
 ## Getting started (any session, any machine)
 

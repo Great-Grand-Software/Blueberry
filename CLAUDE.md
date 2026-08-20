@@ -83,7 +83,7 @@ should be rejected regardless of how good the code is.
 | **Bounded memory** | Browsers cap WebAssembly memory hard. See §4. |
 | **Portrait 3:4, fixed frame** | Viewport is `720x960`. Off-shape screens get the same frame **centred and letterboxed**, never a responsive reflow. That is `stretch/aspect="keep"`, and it is the design, not a placeholder. |
 | **Single point of contact** | One tap or one click. No multi-touch gestures, no keyboard or gamepad requirement. |
-| **Fully monochrome** | No colour anywhere, including new assets. Near-black ink, off-white paper, dark ground. |
+| **Monochrome, one accent** | Near-black ink, off-white paper, near-white wall — and one pale blue, which means **points**: holidays, the note when one is collected, prices, and the two buttons that spend them. Nothing that is not about points wears it; nothing else, new assets included, is anything but a near-neutral. Every shade lives in `scripts/ui/palette.gd`, and `check-constraints.sh` fails any `Color(...)` literal that is neither neutral nor that accent. A second hue is a design change, not a tweak — see `DESIGN.md` §9. |
 | **No unbounded loops or spawn logic** | Anywhere in gameplay code. See §4. |
 
 ---
@@ -95,11 +95,11 @@ Enforced by `gdlint` (config in `.gdlintrc`). CI fails on any violation.
 **Typing**
 
 - **Static typing everywhere.** Annotate every variable, parameter, and return
-  type: `var _pages: Array[MonthPage] = []`, `func fold_down() -> void:`.
+  type: `var _pages: Array[CalendarPage] = []`, `func rip_off() -> void:`.
 - Use `:=` inference only when the type is obvious from the right-hand side
   (`var config := ConfigFile.new()`). Otherwise write the type out.
 - Typed collections over untyped. Type loop variables too:
-  `for page: MonthPage in _pages:`.
+  `for page: CalendarPage in _pages:`.
 
 **Naming**
 
@@ -134,9 +134,9 @@ exports → public vars → private vars → @onready vars → methods
 - `scenes/` (`.tscn`), `scripts/` (`.gd`), `assets/`, `tests/`, `addons/`
   (bootstrap-managed, git-ignored).
 - Scripts mirror their scene: `scenes/game.tscn` →
-  `scripts/game/calendar_screen.gd`.
+  `scripts/game/game_screen.gd`.
 - Grouped by role: `scripts/game/`, `scripts/ui/`, `scripts/autoload/`.
-- Reach into a scene with unique names (`%PageHost`), never brittle paths.
+- Reach into a scene with unique names (`%CalendarView`), never brittle paths.
 - Wire signals in `_ready()` in code, so the connection shows up in the diff
   rather than being buried in a `.tscn`.
 - `GameState` is the **only** autoload. Adding another needs a good reason.
@@ -152,16 +152,20 @@ about whether something "looks reasonable".
 
 - **Never instantiate a collection whose size is driven by data without a hard
   cap.** The calendar runs forever; the node count must not grow.
-  `CalendarScreen.MAX_LIVE_PAGES = 2` — the page being tapped and the one
-  underneath it, nothing more.
+  `CalendarView.MAX_LIVE_PAGES = 2` — the page being ripped and the one
+  underneath it, nothing more. Pages already falling are capped separately by
+  `CalendarView.MAX_FALLING_PAGES = 3`, because a tapper faster than the fall
+  would otherwise outrun the tween that frees them.
 - Any loop that creates nodes must be bounded by a **named constant**, never
   by a data-derived length alone.
 - Ceiling: **64 simultaneous nodes** under one gameplay host node. Past that,
   pool and reuse.
 - **Prefer one `_draw()` over many nodes** for repeated visual elements.
-  `MonthPage` draws all 30 day cells, rules and X marks itself rather than
-  spawning 30 children. `CounterDisplay` draws six units rather than twelve
-  labels. Follow this pattern for anything gridded or repeated.
+  `CalendarPage` draws its whole face itself — a giant day number, a month
+  grid, three of them side by side, or twelve month tracks — rather than a node
+  per cell, so a yearly page costs exactly what a daily one does. `StatsView` and `StoreView` draw their
+  rows and panels the same way. Follow this pattern for anything gridded or
+  repeated.
 - Every spawned node needs an owner responsible for freeing it. Nodes that
   animate themselves out must `queue_free()` at the end of that animation.
 
@@ -204,19 +208,27 @@ memory both stay flat. Keep it that way.
   300–1700 bytes each. New imagery should match.
 - **Rasters: 512×512 maximum**, and only that big with a stated reason.
 - **Hold one texture at a time per display slot.** `MonthImage` replaces
-  `texture` on advance and never accumulates frames.
+  `texture` when the page changes month and never accumulates frames. Only the
+  pages currently alive hold one at all.
 - No `preload()` of an asset set. `preload` only single scenes/scripts needed
   at load; bulk content loads lazily by path.
 - New assets: justify the byte cost in the PR description.
 
 **Input**
 
-- All gameplay input reduces to one point of contact. `MonthPage._gui_input`
-  accepts that one contact pressed, moved and released — `InputEventScreenTouch`
-  and `InputEventScreenDrag` at index 0, or `InputEventMouseButton` and
-  `InputEventMouseMotion` for the left button — and nothing else. Holding and
-  moving is one contact, not a gesture; a second index is still ignored
-  everywhere.
+- All gameplay input reduces to one point of contact, and **`ViewPager` is the
+  only thing that reads it**, except where a view claims a contact for a real
+  control of its own through `swallows_contact` — the store's buy button is the
+  one place that happens, and a swipe cannot start on it as a result. The edge
+  chevrons are tap targets too, but `ViewPager` hit-tests those itself, so it
+  is still the single reader of the finger. `ViewPager._input` accepts that one contact
+  pressed, moved and released — `InputEventScreenTouch` and
+  `InputEventScreenDrag` at index 0, or `InputEventMouseButton` and
+  `InputEventMouseMotion` for the left button — and nothing else. It decides
+  whether the contact was a swipe or a tap and hands taps on to the view in
+  front. Nothing underneath does its own hit-testing: a rip and a swipe are the
+  same finger, and two readers of it would both claim it. Holding and moving is
+  one contact, not a gesture; a second index is ignored everywhere.
 - No handler requiring two simultaneous events, and no gesture events
   (`InputEventPanGesture`, `InputEventMagnifyGesture`) anywhere.
 - No keyboard or gamepad as the *only* way to do anything. Pause is an
@@ -235,11 +247,14 @@ godot --headless --path . --export-release "Web" build/web/index.html
 
 - Tests live in `tests/unit/`, named `test_*.gd`, extending `GutTest`.
 - **Test the guardrails, not just the happy path.**
-  `test_calendar_screen.gd` asserts live pages never exceed `MAX_LIVE_PAGES`
-  across three months of tapping; `test_day_counter.gd` asserts the odometer
-  recombines losslessly. Those are the tests that matter most here.
-- Pure logic (`CalendarData`, `DayCounter`) must stay testable without
-  instantiating a scene. Keep it that way.
+  `test_calendar_view.gd` asserts pinned pages never exceed `MAX_LIVE_PAGES`
+  across sixty rips and that ripping faster than the fall cannot pile sheets
+  up; `test_calendar_tier.gd` asserts a year of rips lands exactly on New Year
+  on all four tiers; `test_view_pager.gd` asserts a swipe never also rips the
+  page under it, and that no calendar ever overlaps an edge chevron's tap zone.
+  Those are the tests that matter most here.
+- Pure logic (`CalendarData`, `HolidayData`, `CalendarTier`, `DayCounter`) must
+  stay testable without instantiating a scene. Keep it that way.
 
 ---
 
@@ -268,7 +283,7 @@ Files in `.github/CODEOWNERS` — this file, the CI workflows, the bootstrap and
 repo-settings scripts, the constraint checker, `.gdlintrc`, `project.godot`,
 and `.claude/` — additionally require Talon's personal approval.
 
-**If your PR fills one of the open slots in `DESIGN.md` §7, update that file in
+**If your PR fills one of the open slots in `DESIGN.md` §10, update that file in
 the same PR.** An open slot quietly filled is worse than one still open.
 
 ---
@@ -287,11 +302,14 @@ the same PR.** An open slot quietly filled is worse than one still open.
 │   ├── bootstrap.sh             ← Phase 0, run first (owned by Talon)
 │   ├── apply-repo-settings.sh   ← branch protection (owned by Talon)
 │   ├── check-constraints.sh     ← the `constraints` CI gate; run it locally
-│   ├── autoload/game_state.gd   ← score, calendar position (only autoload)
-│   ├── game/                    ← calendar_data, day_counter, month_page,
-│   │                              month_image, calendar_screen
-│   └── ui/                      ← main_menu, pause_overlay, counter_display
-├── scenes/                      ← main_menu, game, month_page
+│   ├── autoload/game_state.gd   ← points, tier, calendar position (only autoload)
+│   ├── game/                    ← calendar_data, holiday_data, calendar_tier,
+│   │                              day_counter, calendar_page, month_image,
+│   │                              calendar_view, game_screen
+│   └── ui/                      ← palette, lettering, main_menu, menu_calendar,
+│                                  pause_overlay, header_bar, view_pager,
+│                                  view_arrows, stats_view, store_view
+├── scenes/                      ← main_menu, game, calendar_page
 ├── assets/images/months/        ← twelve SVG line drawings
 ├── tests/unit/                  ← GUT suite
 ├── addons/gut/                  ← installed by bootstrap, git-ignored
@@ -300,9 +318,15 @@ the same PR.** An open slot quietly filled is worse than one still open.
 
 ## 8. The game
 
-A calendar fills the lower two-thirds of a portrait screen. Tap a day to cross
-it off with an X. Thirty taps finish the month; the page folds down, revealing
-the next month and its line drawing. The score is every day ever tapped, shown
-across six units at once. It never ends and never caps.
+A calendar hangs off a single thumbtack on a plain cubicle wall. Tap it to rip
+the page off; it tears loose and tumbles away, revealing the next one. Points
+come from holidays and nothing else — eight a year, so most rips are worth
+nothing — and the year on the wall climbs from 2026 forever.
+
+Spend the points in the store on a coarser calendar: monthly, then quarterly,
+then yearly, each a differently shaped object covering more of the year per
+rip, at 80, 800 and 8,000 points — ten years, then a hundred, then a thousand.
+Swipe between the calendar, your progress, and the store. It never ends and
+never caps.
 
 Full intent, screen geometry, and the open slots: **`DESIGN.md`**.

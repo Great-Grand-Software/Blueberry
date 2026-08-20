@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/game/calendar_page.gd" id="1_page"]
+[ext_resource type="Script" path="res://scripts/game/month_image.gd" id="2_image"]
+
+[node name="CalendarPage" type="Control"]
+custom_minimum_size = Vector2(440, 620)
+offset_right = 440.0
+offset_bottom = 620.0
+mouse_filter = 2
+script = ExtResource("1_page")
+
+[node name="Illustration" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 416.0
+offset_bottom = 204.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+script = ExtResource("2_image")
