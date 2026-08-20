@@ -58,6 +58,29 @@ func test_a_year_of_rips_lands_exactly_on_new_year_again() -> void:
 		)
 
 
+func test_the_ladder_is_priced_in_decades_then_centuries_then_millennia() -> void:
+	# A year is eight points on every calendar, so the price is really a span
+	# of in-game time: ten years, then a hundred, then a thousand.
+	var expected_years: Array[int] = [10, 100, 1000]
+	for tier: int in CalendarTier.TIER_COUNT - 1:
+		assert_eq(
+			CalendarTier.upgrade_cost(tier) / HolidayData.HOLIDAY_COUNT,
+			expected_years[tier],
+			"the %s upgrade" % CalendarTier.tier_name(tier)
+		)
+	assert_eq(CalendarTier.upgrade_cost(CalendarTier.DAILY), 80)
+	assert_eq(CalendarTier.upgrade_cost(CalendarTier.MONTHLY), 800)
+	assert_eq(CalendarTier.upgrade_cost(CalendarTier.QUARTERLY), 8000)
+
+
+func test_the_first_upgrade_is_a_real_stretch() -> void:
+	# The brief asks for at least 30 points, and roughly eight to ten years of
+	# the daily calendar before the first upgrade is in reach.
+	var first: int = CalendarTier.upgrade_cost(CalendarTier.DAILY)
+	assert_gte(first, 30, "at least thirty points")
+	assert_between(first / HolidayData.HOLIDAY_COUNT, 8, 10, "eight to ten years of ripping")
+
+
 func test_costs_escalate_exponentially() -> void:
 	assert_eq(CalendarTier.upgrade_cost(CalendarTier.DAILY), CalendarTier.BASE_COST)
 	assert_eq(

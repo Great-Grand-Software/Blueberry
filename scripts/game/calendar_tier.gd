@@ -8,10 +8,15 @@ extends RefCounted
 ## same eight holidays per year, so an upgrade buys the same points for fewer
 ## rips rather than a different amount of points.
 ##
-## Costs are BASE_COST * COST_RATIO^tier, which is the exponential curve the
-## brief asks for. Read as rips-to-afford at the tier you are on, the three
-## upgrades land at roughly 76, 36 and 96 rips — expensive enough to be earned,
-## cheap enough that a session reaches the top.
+## Costs are BASE_COST * COST_RATIO^tier: 80, 800 and 8000 points. Because a
+## year is worth eight points on every calendar, that reads as a clean ladder of
+## in-game time — the first upgrade is ten years of ripping, the second a
+## hundred, the third a thousand. The year on the wall is the progress bar.
+##
+## In actual rips at the tier you are on, that is roughly 3,650, then 1,200,
+## then 4,000. The dip in the middle is the point of an upgrade: the monthly
+## calendar covers thirty times the year per rip, so a hundred years on it is
+## less work than ten years of ripping single days.
 
 ## Ordered from the starting tier upward. `span_days` of 0 means the span is
 ## the real length of whatever month or quarter the rip lands on.
@@ -36,8 +41,9 @@ const QUARTERLY: int = 2
 const YEARLY: int = 3
 
 ## Cost of the first upgrade, in points, and the factor between upgrades.
-const BASE_COST: int = 3
-const COST_RATIO: int = 8
+## 80 points is ten years at eight holidays a year.
+const BASE_COST: int = 80
+const COST_RATIO: int = 10
 
 
 ## Clamps a tier index into 0..3. Tiers do not wrap — the top is the top.

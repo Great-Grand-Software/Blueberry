@@ -83,7 +83,7 @@ should be rejected regardless of how good the code is.
 | **Bounded memory** | Browsers cap WebAssembly memory hard. See §4. |
 | **Portrait 3:4, fixed frame** | Viewport is `720x960`. Off-shape screens get the same frame **centred and letterboxed**, never a responsive reflow. That is `stretch/aspect="keep"`, and it is the design, not a placeholder. |
 | **Single point of contact** | One tap or one click. No multi-touch gestures, no keyboard or gamepad requirement. |
-| **Monochrome, one accent** | Near-black ink, off-white paper, near-white wall — and exactly one colour, the pale blue on the store's buy button. Nothing else, including new assets, may be anything but a near-neutral. Every shade lives in `scripts/ui/palette.gd`, and `check-constraints.sh` fails any `Color(...)` literal that is neither neutral nor that accent. A second hue is a design change, not a tweak — see `DESIGN.md` §8. |
+| **Monochrome, one accent** | Near-black ink, off-white paper, near-white wall — and exactly one colour, a pale blue, used only on the primary action of a screen — Start on the menu, Buy It in the store. Nothing else, including new assets, may be anything but a near-neutral. Every shade lives in `scripts/ui/palette.gd`, and `check-constraints.sh` fails any `Color(...)` literal that is neither neutral nor that accent. A second hue is a design change, not a tweak — see `DESIGN.md` §9. |
 | **No unbounded loops or spawn logic** | Anywhere in gameplay code. See §4. |
 
 ---
@@ -280,7 +280,7 @@ Files in `.github/CODEOWNERS` — this file, the CI workflows, the bootstrap and
 repo-settings scripts, the constraint checker, `.gdlintrc`, `project.godot`,
 and `.claude/` — additionally require Talon's personal approval.
 
-**If your PR fills one of the open slots in `DESIGN.md` §9, update that file in
+**If your PR fills one of the open slots in `DESIGN.md` §10, update that file in
 the same PR.** An open slot quietly filled is worse than one still open.
 
 ---
@@ -303,8 +303,9 @@ the same PR.** An open slot quietly filled is worse than one still open.
 │   ├── game/                    ← calendar_data, holiday_data, calendar_tier,
 │   │                              day_counter, calendar_page, month_image,
 │   │                              calendar_view, game_screen
-│   └── ui/                      ← palette, main_menu, pause_overlay, header_bar,
-│                                  view_pager, stats_view, store_view
+│   └── ui/                      ← palette, main_menu, menu_calendar,
+│                                  pause_overlay, header_bar, view_pager,
+│                                  stats_view, store_view
 ├── scenes/                      ← main_menu, game, calendar_page
 ├── assets/images/months/        ← twelve SVG line drawings
 ├── tests/unit/                  ← GUT suite
@@ -317,9 +318,12 @@ the same PR.** An open slot quietly filled is worse than one still open.
 A calendar hangs off a single thumbtack on a plain cubicle wall. Tap it to rip
 the page off; it tears loose and tumbles away, revealing the next one. Points
 come from holidays and nothing else — eight a year, so most rips are worth
-nothing. Spend them in the store on a coarser calendar: monthly, then
-quarterly, then yearly, each one a different object that covers more of the
-year per rip. Swipe between the calendar, your progress, and the store. It
-never ends and never caps.
+nothing — and the year on the wall climbs from 2026 forever.
+
+Spend the points in the store on a coarser calendar: monthly, then quarterly,
+then yearly, each a differently shaped object covering more of the year per
+rip, at 80, 800 and 8,000 points — ten years, then a hundred, then a thousand.
+Swipe between the calendar, your progress, and the store. It never ends and
+never caps.
 
 Full intent, screen geometry, and the open slots: **`DESIGN.md`**.

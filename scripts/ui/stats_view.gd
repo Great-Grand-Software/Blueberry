@@ -8,8 +8,8 @@ extends Control
 
 const MARGIN: float = 64.0
 const TITLE_BASELINE: float = 96.0
-const FIRST_ROW_BASELINE: float = 190.0
-const ROW_HEIGHT: float = 62.0
+const FIRST_ROW_BASELINE: float = 176.0
+const ROW_HEIGHT: float = 58.0
 const LABEL_SIZE: int = 14
 const VALUE_SIZE: int = 26
 
@@ -18,6 +18,7 @@ const VALUE_SIZE: int = 26
 const ROW_LABELS: PackedStringArray = [
 	"POINTS",
 	"BEST",
+	"THE YEAR ON THE WALL",
 	"CALENDAR ON THE WALL",
 	"THE PAGE READS",
 	"PAGES RIPPED",
@@ -35,13 +36,17 @@ func refresh() -> void:
 ## The current value for each row, in the same order as ROW_LABELS.
 func _row_values() -> PackedStringArray:
 	return [
-		str(GameState.points),
-		str(GameState.best_points),
+		DayCounter.with_separators(GameState.points),
+		DayCounter.with_separators(GameState.best_points),
+		"%d  (started %d)" % [GameState.current_year(), CalendarData.START_YEAR],
 		CalendarTier.tier_name(GameState.tier_index),
 		DayCounter.format_date(GameState.elapsed_days),
-		str(GameState.total_rips),
-		"%d  (%d in every year)" % [GameState.holiday_count, HolidayData.HOLIDAY_COUNT],
-		str(CalendarTier.taps_per_year(GameState.tier_index)),
+		DayCounter.with_separators(GameState.total_rips),
+		(
+			"%s  (%d in every year)"
+			% [DayCounter.with_separators(GameState.holiday_count), HolidayData.HOLIDAY_COUNT]
+		),
+		DayCounter.with_separators(CalendarTier.taps_per_year(GameState.tier_index)),
 		_next_calendar_text(),
 	]
 
@@ -51,10 +56,10 @@ func _next_calendar_text() -> String:
 	if not CalendarTier.has_upgrade(GameState.tier_index):
 		return "nothing left to buy"
 	return (
-		"%s, %d points"
+		"%s, %s points"
 		% [
 			CalendarTier.tier_name(GameState.tier_index + 1),
-			GameState.next_tier_cost(),
+			DayCounter.with_separators(GameState.next_tier_cost()),
 		]
 	)
 

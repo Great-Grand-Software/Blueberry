@@ -46,6 +46,11 @@ const MONTH_LENGTHS: PackedInt32Array = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31,
 
 const MONTH_COUNT: int = 12
 const DAYS_PER_YEAR: int = 365
+
+## The year the calendar opens on. Every rip pushes it forward and nothing
+## ever pushes it back — a purchase carries the year over rather than resetting
+## it, so the number on the wall is the record of the whole run.
+const START_YEAR: int = 2026
 const MONTHS_PER_QUARTER: int = 3
 const QUARTER_COUNT: int = 4
 

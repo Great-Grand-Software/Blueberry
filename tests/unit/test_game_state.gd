@@ -93,49 +93,18 @@ func test_the_calendar_keeps_going_past_a_year() -> void:
 	for _year: int in 5:
 		GameState.rip_page()
 	assert_eq(GameState.points, HolidayData.HOLIDAY_COUNT * 5, "no cap, no end state")
-	assert_eq(DayCounter.year_of(GameState.elapsed_days), DayCounter.FIRST_YEAR + 5)
+	assert_eq(GameState.current_year(), CalendarData.START_YEAR + 5)
 
 
-func test_an_upgrade_is_gated_on_the_points_being_there() -> void:
-	assert_false(GameState.can_afford_upgrade(), "nothing earned yet")
-	assert_false(GameState.buy_upgrade(), "and so nothing is sold")
-	assert_eq(GameState.tier_index, CalendarTier.DAILY)
-
-	_grant(GameState.next_tier_cost() - 1)
-	assert_false(GameState.can_afford_upgrade(), "one point short is still short")
-
-	_grant(GameState.next_tier_cost())
-	assert_true(GameState.can_afford_upgrade())
-
-
-func test_buying_swaps_the_calendar_and_spends_the_points() -> void:
-	var cost: int = GameState.next_tier_cost()
-	_grant(cost + 2)
-	GameState.elapsed_days = 200
-	GameState.total_rips = 200
-
-	assert_true(GameState.buy_upgrade())
-	assert_eq(GameState.tier_index, CalendarTier.MONTHLY)
-	assert_eq(GameState.points, 2, "the cost is spent, the rest is kept")
-	assert_eq(GameState.elapsed_days, 0, "the new calendar starts at New Year")
-	assert_eq(GameState.total_rips, 0, "tap progress resets on the new tier")
-
-
-func test_the_top_calendar_cannot_be_upgraded_past() -> void:
+func test_the_year_climbs_into_the_far_future() -> void:
+	# What the player is really watching. A yearly calendar reaches four
+	# figures and keeps going.
+	assert_eq(GameState.current_year(), CalendarData.START_YEAR)
 	GameState.tier_index = CalendarTier.YEARLY
-	_grant(99999)
-	assert_eq(GameState.next_tier_cost(), -1)
-	assert_false(GameState.can_afford_upgrade())
-	assert_false(GameState.buy_upgrade(), "there is nothing above yearly")
-	assert_eq(GameState.points, 99999, "and nothing is charged for it")
-
-
-func test_climbing_every_tier_leaves_the_ladder_at_the_top() -> void:
-	for _step: int in CalendarTier.TIER_COUNT - 1:
-		_grant(GameState.next_tier_cost())
-		assert_true(GameState.buy_upgrade())
-	assert_eq(GameState.tier_index, CalendarTier.YEARLY)
-	assert_eq(GameState.points, 0)
+	for _rip: int in 2001:
+		GameState.rip_page()
+	assert_eq(GameState.current_year(), 4027)
+	assert_eq(GameState.points, HolidayData.HOLIDAY_COUNT * 2001, "no cap on the score either")
 
 
 func test_signals_fire_for_what_actually_happened() -> void:

@@ -64,7 +64,7 @@ color = Color(0.929, 0.925, 0.914, 1)
 unique_name_in_owner = true
 clip_contents = true
 layout_mode = 0
-offset_top = 96.0
+offset_top = 120.0
 offset_right = 720.0
 offset_bottom = 960.0
 mouse_filter = 2
@@ -74,14 +74,14 @@ script = ExtResource("2_pager")
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 2160.0
-offset_bottom = 864.0
+offset_bottom = 840.0
 mouse_filter = 2
 
 [node name="StatsView" type="Control" parent="ViewPager/Track"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 720.0
-offset_bottom = 864.0
+offset_bottom = 840.0
 mouse_filter = 2
 script = ExtResource("3_stats")
 
@@ -90,7 +90,7 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 720.0
 offset_right = 1440.0
-offset_bottom = 864.0
+offset_bottom = 840.0
 mouse_filter = 2
 script = ExtResource("4_calendar")
 
@@ -99,7 +99,7 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 1440.0
 offset_right = 2160.0
-offset_bottom = 864.0
+offset_bottom = 840.0
 mouse_filter = 2
 script = ExtResource("5_store")
 
@@ -125,7 +125,7 @@ text = "BUY IT"
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 720.0
-offset_bottom = 96.0
+offset_bottom = 120.0
 mouse_filter = 2
 script = ExtResource("6_header")
 
@@ -138,46 +138,6 @@ offset_right = 54.0
 offset_bottom = 52.0
 theme_override_font_sizes/font_size = 17
 text = "II"
-
-[node name="PointsLabel" type="Label" parent="HeaderBar"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 66.0
-offset_top = 8.0
-offset_right = 190.0
-offset_bottom = 62.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.965, 0.961, 0.949, 1)
-theme_override_font_sizes/font_size = 40
-text = "0"
-horizontal_alignment = 2
-vertical_alignment = 1
-
-[node name="TierLabel" type="Label" parent="HeaderBar"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 250.0
-offset_top = 12.0
-offset_right = 620.0
-offset_bottom = 36.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.549, 0.545, 0.533, 1)
-theme_override_font_sizes/font_size = 15
-text = "DAILY CALENDAR"
-vertical_alignment = 1
-
-[node name="DateLabel" type="Label" parent="HeaderBar"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 250.0
-offset_top = 38.0
-offset_right = 620.0
-offset_bottom = 68.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.965, 0.961, 0.949, 1)
-theme_override_font_sizes/font_size = 20
-text = "1 JAN  YEAR 1"
-vertical_alignment = 1
 
 [node name="PauseOverlay" type="Control" parent="."]
 unique_name_in_owner = true

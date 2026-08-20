@@ -135,18 +135,32 @@ func _draw_offer(font: Font) -> void:
 				CalendarTier.taps_per_year(GameState.tier_index),
 			]
 		),
-		CARD_RECT.position.y + 214.0,
+		CARD_RECT.position.y + 208.0,
 		15,
 		Palette.INK
+	)
+	_centred(
+		font,
+		"about %s years of ripping away" % DayCounter.with_separators(_years_to_afford()),
+		CARD_RECT.position.y + 238.0,
+		14,
+		Palette.MUTED
 	)
 	_centred(font, "COST", CARD_RECT.position.y + 278.0, 14, Palette.MUTED)
 	_centred(
 		font,
-		"%d POINTS" % GameState.next_tier_cost(),
+		"%s POINTS" % DayCounter.with_separators(GameState.next_tier_cost()),
 		CARD_RECT.position.y + 324.0,
 		32,
 		Palette.INK
 	)
+
+
+## How many in-game years the price is worth, since a year is eight points on
+## every calendar. It is the honest unit for the cost — the store is really
+## selling time.
+func _years_to_afford() -> int:
+	return GameState.next_tier_cost() / HolidayData.HOLIDAY_COUNT
 
 
 ## The running total, repeated where the price is, so the gate and the balance
@@ -154,7 +168,10 @@ func _draw_offer(font: Font) -> void:
 func _draw_balance(font: Font, baseline: float) -> void:
 	_centred(
 		font,
-		"YOU HAVE %d POINT%s" % [GameState.points, "" if GameState.points == 1 else "S"],
+		(
+			"YOU HAVE %s POINT%s"
+			% [DayCounter.with_separators(GameState.points), "" if GameState.points == 1 else "S"]
+		),
 		baseline,
 		18,
 		Palette.MUTED

@@ -16,7 +16,7 @@ org. The loop is small because it is meant to be built on, not because it ran
 out of time.
 
 Several decisions below are intentionally incomplete. They are called out in
-§9 so nobody mistakes an open slot for something already settled.
+§10 so nobody mistakes an open slot for something already settled.
 
 ---
 
@@ -42,9 +42,11 @@ A fixed UI band across the top, and everything else in a pager beneath it.
 
 ```
 ┌─────────────────────────────────┐  y=0
-│ [II]   1  DAILY CALENDAR        │  UI band — 720x96, always visible
-│          PTS  17 MAR  YEAR 1  ○●○│
-├─────────────────────────────────┤  y=96
+│ [II]                       ○●○  │  score band — 720x120, always visible
+│    1,284    │    2136           │
+│    POINTS   │   THE YEAR        │
+│  DAILY · 17 MAR      BEST 1,284 │
+├─────────────────────────────────┤  y=120
 │                                 │
 │      ┌───────────────────┐      │  the wall — 720x864
 │      │  ○ backing + tack │      │  one of three views
@@ -59,10 +61,16 @@ A fixed UI band across the top, and everything else in a pager beneath it.
 └─────────────────────────────────┘  y=960
 ```
 
-**The UI band.** A fixed 96px strip: the pause button, the running point
-total, which calendar is on the wall, the date it currently reads, and three
-dots showing which view is in front. It never scrolls, so the point total is
-visible from every view.
+**The score band.** A fixed 120px strip holding the two numbers the whole game
+is about, side by side and set large: **points earned** and **the year on the
+wall**. Underneath them, smaller, sits the detail — which calendar is up, what
+its page reads, and the personal best — plus the pause button and three dots
+showing which view is in front. The band never scrolls, so the score is
+readable from every view.
+
+Big counts are grouped in threes (`8,000`, not `8000`). A five-figure score in
+an unbroken run of digits is the thing that makes a big number unreadable, and
+this game produces five-figure numbers routinely.
 
 **The three views** live in a pager filling everything below the band. Left to
 right: **Stats**, **Calendar**, **Store**. The calendar is the middle one, so
@@ -72,16 +80,33 @@ both others are exactly one swipe away.
 panel seam near the bottom — with a single thumbtack holding a paper backing
 strip, and the current page hanging off it. That is the whole scene. It is
 bare on purpose: dressing the wall is a progression reward, not part of this
-build. See §9.
+build. See §10.
 
-**A geometric note.** The page size is per tier — see §4 — and each has to fit
+**A geometric note.** The page size is per tier — see §5 — and each has to fit
 between the tack and the point flash, inside the 792px at the top of the wall.
 The tallest is the monthly sheet at 690, which leaves 68px of headroom. Grow a
 page past that and the flash badge starts landing on it.
 
 ---
 
-## 3. Core loop
+## 3. The main menu
+
+One blank calendar on the same cubicle wall the game uses — tack, backing
+strip, torn top edge, empty ruled grid — with **BLUEBERRY CALENDAR** above it
+and **Start printed on the sheet itself**.
+
+That placement is the teaching. Pressing a calendar is the entire game, so the
+first thing the player does is the only thing they will ever do. A caption
+under the button says it in words as well, and the line below the calendar
+reports what the saved run has reached — its points, its year, its best.
+
+It is drawn rather than loaded as an image: no bytes to justify, the same
+palette as the wall in-game, and crisp at whatever size the frame is
+letterboxed to.
+
+---
+
+## 4. Core loop
 
 1. A calendar page hangs off the thumbtack. **Tap it to rip it off.**
 2. The page tears loose, tumbles down past the bottom of the wall, and is
@@ -102,7 +127,7 @@ mean something: a page is a page whether it is one day or a whole year.
 
 ---
 
-## 4. The four calendars
+## 5. The four calendars
 
 Each tier is a **distinct calendar object**, not a multiplier on the same one.
 Buying one swaps the object entirely and starts it back at the 1st of January.
@@ -144,10 +169,16 @@ four tiers: a year of rips lands on New Year again, exactly.
 
 ---
 
-## 5. Score
+## 6. Score
 
 **Points come from holidays and from nothing else.** Most rips award nothing,
 which is what makes a page with a holiday on it feel like something.
+
+**The year is the other half of the score.** The calendar opens on **1 January
+2026** and the year climbs with every rip, forever — a long run really does
+reach 4027 and beyond. It is printed on every page, shown large in the score
+band, and carried across a purchase rather than reset, so it is the record of
+the whole run rather than of the current calendar.
 
 There are **eight holidays**, all on fixed dates:
 
@@ -172,14 +203,24 @@ best total ever held is saved locally.
 
 ---
 
-## 6. Store and upgrades
+## 7. Store and upgrades
 
 The store shows exactly **one** calendar for sale: the next one up.
 
-Costs are `BASE_COST * COST_RATIO^tier` — **3, 24, 192 points**, a factor of
-eight each time. Read as rips-to-afford at the tier you are on, the three
-upgrades land at roughly 76, 36 and 96 rips: expensive enough to be earned,
-cheap enough that one session reaches the top.
+Costs are `BASE_COST * COST_RATIO^tier` — **80, 800 and 8,000 points**, a
+factor of ten each time.
+
+Because a year is worth eight points on every calendar, the price is really a
+span of in-game time, and that is how the store states it: **ten years, then a
+hundred, then a thousand.** The year on the wall is the progress bar.
+
+In actual rips at the tier you are on, that is roughly **3,650, then 1,200,
+then 4,000**. The dip in the middle is the whole point of an upgrade: the
+monthly calendar covers thirty times the year per rip, so a century on it is
+less work than a decade of ripping single days. The curve is exponential in
+points and in in-game time; it is deliberately *not* monotonic in rips, because
+an upgrade that did not make the next stretch feel faster would not be worth
+buying.
 
 The buy control is a **real `Button`, in the game's one accent colour**. It is
 live and pale blue when the points are in hand, and disabled and grey with the
@@ -188,12 +229,18 @@ broken button. Buying spends the points, swaps the calendar, resets it to New
 Year, and sends the player back to the wall to see what they bought.
 
 It is the one control in a view that handles its own contact rather than going
-through the pager — see §7. Once the yearly calendar is on the wall there is
+through the pager — see §8. Once the yearly calendar is on the wall there is
 nothing to sell, and the button is hidden rather than left dead.
+
+**Buying moves the calendar forward, not back.** The new sheet hangs on the 1st
+of January of the following year, so monthly and quarterly pages stay aligned
+to real boundaries without handing back the years already ripped. Points spent
+are gone; rips and holidays collected are lifetime counts, because a score that
+resets on a purchase is a punishment for upgrading.
 
 ---
 
-## 7. Navigation, and the one contact rule
+## 8. Navigation, and the one contact rule
 
 Swipe left or right between the three views. The calendar is in the middle,
 Stats to its left, Store to its right.
@@ -226,15 +273,17 @@ because the pause button lives up there and is a real `Button`.
 
 ---
 
-## 8. End state, and visual style
+## 9. End state, and visual style
 
 **There is no end state.** The game does not end, win, or lose. It persists as
 long as the player keeps ripping. The best point total is saved locally.
 
 **Monochrome, with exactly one accent.** Near-black ink, off-white paper, a
-near-white cubicle wall, a near-black UI band — and one pale blue, on the
-store's buy button and nowhere else. It marks the single action in the game
-that spends something, which is the one place worth pulling the eye to.
+near-white cubicle wall, a near-black score band — and one pale blue.
+
+The accent marks **the primary action of a screen, and nothing else**: Start on
+the menu, Buy It in the store. Those are the only two controls in the game that
+commit the player to something. Anything else wearing it would make it noise.
 
 Every shade lives in `scripts/ui/palette.gd`. `check-constraints.sh` fails any
 colour literal in the project that is neither a near-neutral nor exactly that
@@ -250,7 +299,7 @@ features.
 
 ---
 
-## 9. Explicitly open — not yet designed
+## 10. Explicitly open — not yet designed
 
 **These are open slots, not oversights.** Nothing below has been decided, and
 a PR proposing any of it is proposing something new rather than fixing
@@ -282,5 +331,5 @@ Smaller open questions, same status:
   reach 1536 points, and one rip would be worth 80.
 
 If you build one of these, **update this file in the same PR** — move it out
-of §9 and describe what you decided. An open slot that has quietly been filled
+of §10 and describe what you decided. An open slot that has quietly been filled
 is worse than one that is still open.

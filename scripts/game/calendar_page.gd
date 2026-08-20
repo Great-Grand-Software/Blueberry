@@ -22,7 +22,7 @@ signal rip_finished(page: CalendarPage)
 ## Page size per tier, indexed by CalendarTier. Read through `page_size()`.
 const PAGE_SIZES: Array[Vector2] = [
 	Vector2(320.0, 320.0),
-	Vector2(340.0, 690.0),
+	Vector2(340.0, 660.0),
 	Vector2(620.0, 400.0),
 	Vector2(640.0, 560.0),
 ]
@@ -166,7 +166,7 @@ func _place_illustration() -> void:
 func _illustration_rect() -> Rect2:
 	match _tier_index:
 		CalendarTier.MONTHLY:
-			return Rect2(35.0, 76.0, 270.0, 270.0)
+			return Rect2(42.0, 74.0, 255.0, 255.0)
 		CalendarTier.QUARTERLY:
 			return Rect2(18.0, 22.0, 78.0, 78.0)
 		CalendarTier.YEARLY:
@@ -226,8 +226,9 @@ func _draw_torn_edge(face: Vector2) -> void:
 func _draw_daily_face(face: Vector2) -> void:
 	var font: Font = ThemeDB.fallback_font
 	var month: int = CalendarData.month_of_year_day(year_day())
-	_centred(font, CalendarData.month_name(month).to_upper(), 54.0, 20, Palette.INK, 0.0, face.x)
-	_centred(font, str(CalendarData.day_of_month(year_day())), 202.0, 128, Palette.INK, 0.0, face.x)
+	_centred(font, CalendarData.month_name(month).to_upper(), 52.0, 20, Palette.INK, 0.0, face.x)
+	_centred(font, _year_text(), 72.0, 15, Palette.MUTED, 0.0, face.x)
+	_centred(font, str(CalendarData.day_of_month(year_day())), 208.0, 122, Palette.INK, 0.0, face.x)
 	_centred(
 		font,
 		"DAY %d OF %d" % [year_day() + 1, CalendarData.DAYS_PER_YEAR],
@@ -245,11 +246,11 @@ func _draw_monthly_face(face: Vector2) -> void:
 	var font: Font = ThemeDB.fallback_font
 	var month: int = CalendarData.month_of_year_day(year_day())
 	_centred(font, CalendarData.month_name(month).to_upper(), 44.0, 26, Palette.INK, 0.0, face.x)
-	_centred(font, _year_text(), 63.0, 12, Palette.MUTED, 0.0, face.x)
+	_centred(font, _year_text(), 64.0, 16, Palette.MUTED, 0.0, face.x)
 	# The picture square is the illustration node; this is the grid square
 	# directly beneath it, the same size, which is what makes it read as two.
-	_draw_month_grid(Rect2(35.0, 358.0, 270.0, 270.0), month, 13)
-	_draw_holiday_strip(font, Rect2(24.0, 622.0, face.x - 48.0, face.y - 622.0))
+	_draw_month_grid(Rect2(42.0, 341.0, 255.0, 255.0), month, 13)
+	_draw_holiday_strip(font, Rect2(24.0, 604.0, face.x - 48.0, face.y - 604.0))
 
 
 ## Quarterly: a landscape sheet with its three months laid out side by side.
@@ -258,7 +259,7 @@ func _draw_quarterly_face(face: Vector2) -> void:
 	var quarter: int = CalendarData.quarter_of_month(CalendarData.month_of_year_day(year_day()))
 	var first: int = CalendarData.quarter_first_month(quarter)
 	_centred(font, _title_text(), 50.0, 26, Palette.INK, 0.0, face.x)
-	_centred(font, _year_text(), 70.0, 12, Palette.MUTED, 0.0, face.x)
+	_centred(font, _year_text(), 72.0, 16, Palette.MUTED, 0.0, face.x)
 
 	var band := Rect2(26.0, 100.0, face.x - 52.0, 226.0)
 	var column: float = band.size.x / CalendarData.MONTHS_PER_QUARTER
@@ -284,7 +285,7 @@ func _draw_quarterly_face(face: Vector2) -> void:
 func _draw_yearly_face(face: Vector2) -> void:
 	var font: Font = ThemeDB.fallback_font
 	_centred(font, _title_text(), 58.0, 26, Palette.INK, 0.0, face.x)
-	_centred(font, _year_text(), 78.0, 12, Palette.MUTED, 0.0, face.x)
+	_centred(font, _year_text(), 80.0, 16, Palette.MUTED, 0.0, face.x)
 
 	var band := Rect2(26.0, 126.0, face.x - 52.0, 358.0)
 	var row_height: float = band.size.y / CalendarData.MONTH_COUNT
@@ -419,8 +420,11 @@ func _title_text() -> String:
 			return CalendarData.month_name(month).to_upper()
 
 
+## The year printed on the sheet. It is the run's progress bar — it starts at
+## 2026 and a long game really does reach 6782 — so every calendar prints it,
+## and prints it larger than the caption it replaced.
 func _year_text() -> String:
-	return "YEAR %d" % DayCounter.year_of(_elapsed_days)
+	return str(DayCounter.year_of(_elapsed_days))
 
 
 ## Draws `text` centred inside a horizontal band.

@@ -31,11 +31,11 @@ const MAX_FALLING_PAGES: int = 3
 ## blank. A named bound, not one derived from the width.
 const WALL_GRAIN_LINES: int = 30
 ## Height of the panel seam near the bottom of the wall.
-const WALL_SEAM_Y: float = 806.0
+const WALL_SEAM_Y: float = 782.0
 
 ## The wall above the flash band. Backing strip and page are centred in here
 ## together, so the calendar is balanced whatever shape it is.
-const HANGING_REGION: float = 792.0
+const HANGING_REGION: float = 772.0
 ## Never let the backing ride right up against the UI band.
 const MIN_BACKING_TOP: float = 8.0
 ## The strip the tack goes through, which stays put when a page comes away. It
@@ -52,8 +52,12 @@ const FALL_DISTANCE: float = 900.0
 ## own paper, because a yearly page reaches far enough down the wall that a
 ## bare line of text would land on top of it.
 const FLASH_DURATION: float = 1.1
-const FLASH_RISE: float = 44.0
-const FLASH_BASELINE: float = 838.0
+const FLASH_RISE: float = 36.0
+## How far below the sheet the note starts. It follows the calendar rather than
+## sitting at a fixed height, so it lands just under whichever shape is hanging
+## instead of stranded at the bottom of the wall on the small ones.
+const FLASH_DROP: float = 76.0
+const FLASH_FLOOR: float = 812.0
 const FLASH_PADDING: Vector2 = Vector2(18.0, 12.0)
 
 ## Index 0 is the page being ripped; index 1 is the one underneath it.
@@ -236,7 +240,8 @@ func _draw_flash() -> void:
 		return
 	var font: Font = ThemeDB.fallback_font
 	var alpha: float = 1.0 - pow(_flash_progress, 3.0)
-	var baseline: float = FLASH_BASELINE - FLASH_RISE * _flash_progress
+	var anchor: float = minf(page_rect().end.y + FLASH_DROP, FLASH_FLOOR)
+	var baseline: float = anchor - FLASH_RISE * _flash_progress
 	var width: float = font.get_string_size(_flash_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 20).x
 	var badge := Rect2(
 		Vector2((size.x - width) * 0.5 - FLASH_PADDING.x, baseline - 22.0 - FLASH_PADDING.y),

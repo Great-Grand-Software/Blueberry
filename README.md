@@ -8,7 +8,7 @@ development machine anywhere in this workflow.
 **This is an experimental proof of concept, not a polished game.** The core
 loop is deliberately minimal: it exists to be extended by contributors through
 pull requests. Parts of it are intentionally left undesigned — read
-[`DESIGN.md`](DESIGN.md) §9 before assuming something is missing by accident.
+[`DESIGN.md`](DESIGN.md) §10 before assuming something is missing by accident.
 
 ## The loop
 
@@ -16,11 +16,15 @@ A calendar hangs off a single thumbtack on a plain cubicle wall. Tap it and
 the page tears loose, tumbles away, and the next one is already underneath.
 
 Points come from **holidays and nothing else** — eight in a year, so most rips
-are worth nothing at all. Spend them in the store on a coarser calendar:
-**Daily** (365 rips a year) becomes **Monthly** (12), then **Quarterly** (4),
-then **Yearly** (1). Each one is a different object with a different face, and
-each covers more of the year per rip — a year is worth the same eight points on
-every one of them, so an upgrade buys those points for less tapping.
+are worth nothing at all. The year on the wall starts at **2026** and climbs
+forever; a long run really does reach 4027.
+
+Spend the points in the store on a coarser calendar: **Daily** (365 rips a
+year) becomes **Monthly** (12), then **Quarterly** (4), then **Yearly** (1).
+Each is a differently shaped object with a different face, and each covers more
+of the year per rip. They cost **80, 800 and 8,000 points** — which, since a
+year is eight points on every calendar, is ten years, then a hundred, then a
+thousand.
 
 Swipe left and right between the calendar, your progress, and the store. It
 never ends, and it never caps.

@@ -19,11 +19,15 @@ var points: int = 0
 var best_points: int = 0
 ## Which of the four calendars is on the wall. See CalendarTier.
 var tier_index: int = 0
-## Days ripped away on the current calendar. Resets when a tier is bought.
+## Days ripped away across the whole run. Buying a calendar moves this on to
+## the next New Year rather than resetting it, so the year keeps climbing —
+## it is the record of how far the run has got.
 var elapsed_days: int = 0
-## Pages ripped on the current calendar, whatever each one was worth.
+## Pages ripped in this run, whatever each one was worth. Lifetime, not
+## per-calendar: it reads as part of the score, and a score that resets on a
+## purchase is a punishment for upgrading.
 var total_rips: int = 0
-## Holidays collected on the current calendar.
+## Holidays collected in this run.
 var holiday_count: int = 0
 
 ## Set while a save is waiting for the end of the frame. See `_queue_save`.
@@ -84,18 +88,22 @@ func can_afford_upgrade() -> bool:
 	return points >= next_tier_cost()
 
 
-## Buys the next calendar. Spends the points, swaps the tier, and starts the
-## new calendar back at the 1st of January — a new object, not a faster old
-## one. Returns false and changes nothing if it cannot be afforded.
+## Buys the next calendar. Spends the points, swaps the tier, and hangs the new
+## calendar on the 1st of January of the following year — a new object, not a
+## faster old one.
+##
+## It moves forward to New Year rather than back to zero for two reasons: a
+## monthly or quarterly page only lines up if the calendar starts on a
+## boundary, and the year is the player's record of the whole run. Ripping
+## through a thousand years and then being sent back to 2026 would throw that
+## away. Returns false and changes nothing if it cannot be afforded.
 func buy_upgrade() -> bool:
 	if not can_afford_upgrade():
 		return false
 
 	points -= next_tier_cost()
 	tier_index = CalendarTier.normalize(tier_index + 1)
-	elapsed_days = 0
-	total_rips = 0
-	holiday_count = 0
+	elapsed_days = DayCounter.next_new_year(elapsed_days)
 
 	tier_changed.emit(tier_index)
 	points_changed.emit(points)
@@ -103,7 +111,13 @@ func buy_upgrade() -> bool:
 	return true
 
 
-## Starts over on the first calendar. The personal best survives.
+## The year currently printed on the calendar. No ceiling.
+func current_year() -> int:
+	return DayCounter.year_of(elapsed_days)
+
+
+## Starts over on the first calendar, back at the opening year. The personal
+## best survives.
 func reset_run() -> void:
 	points = 0
 	tier_index = 0
