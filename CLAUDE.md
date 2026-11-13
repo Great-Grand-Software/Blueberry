@@ -330,3 +330,13 @@ Swipe between the calendar, your progress, and the store. It never ends and
 never caps.
 
 Full intent, screen geometry, and the open slots: **`DESIGN.md`**.
+
+## Cross-repo map (added 2026-11-13)
+
+Talon's private repo `talonbaker/repo-map` (local clone `C:/repos/repo-map`) maps what already exists across all of his
+repos: systems, shaders, tools and assets, with where the best copy lives on GitHub and how to reuse it.
+
+Nothing to do now: work in progress carries on exactly as it is. It is there if you need it:
+
+- Before building a system from scratch, check `catalog/INDEX.md` in repo-map for an existing implementation in another repo.
+- After landing something another project could reuse, add one short note to `repo-map/inbox/` (format in `inbox/README.md`). Do not edit repo-map's `catalog/` directly; a sweep does that.
